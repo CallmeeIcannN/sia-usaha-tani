@@ -1,3 +1,6 @@
+import base64
+import io
+import os
 import random
 import streamlit as st
 import pandas as pd
@@ -31,6 +34,66 @@ div.stButton>button:hover,div.stFormSubmitButton>button:hover{transform:translat
 @media (prefers-reduced-motion:reduce){div.stButton>button,div.stFormSubmitButton>button{transition:none}}
 </style>
 """, unsafe_allow_html=True)
+
+
+
+@st.cache_data
+def foto_latar():
+    """Cari foto latar (nama file diawali 'latar') di folder aplikasi, perkecil, ubah ke base64."""
+    from PIL import Image
+    for nama in sorted(os.listdir(".")):
+        if nama.lower().startswith("latar") and nama.lower().endswith((".jpg", ".jpeg", ".png")):
+            img = Image.open(nama).convert("RGB")
+            img.thumbnail((1600, 1600))
+            buf = io.BytesIO()
+            img.save(buf, "JPEG", quality=70)
+            return base64.b64encode(buf.getvalue()).decode()
+    return None
+
+
+TEMA = {
+    "Terang": dict(bg="#FFFFFF", teks="#1B2A16", side="#E7F0DA", input="#FFFFFF",
+                   garis="#C9D8B4", overlay="rgba(255,255,255,.86)"),
+    "Gelap": dict(bg="#0E180E", teks="#EAF2DD", side="#16241A", input="#1F3023",
+                  garis="#35503A", overlay="rgba(14,24,14,.84)"),
+}
+
+
+def css_tampilan(mode, foto):
+    css = f":root{{--foto:url(data:image/jpeg;base64,{foto})}}" if foto else ""
+
+    def latar(ov):
+        if not foto:
+            return ""
+        return (f".stApp{{background-image:linear-gradient({ov},{ov}),var(--foto);"
+                "background-size:cover;background-position:center;background-attachment:fixed}")
+
+    if mode not in TEMA:  # Otomatis: ikut pengaturan perangkat
+        css += latar("rgba(255,255,255,.86)")
+        if foto:
+            css += "@media (prefers-color-scheme:dark){" + latar("rgba(14,24,14,.84)") + "}"
+        return css
+    t = TEMA[mode]
+    css += latar(t["overlay"])
+    css += (
+        f'.stApp{{background-color:{t["bg"]}!important;color:{t["teks"]}!important}}'
+        '[data-testid="stHeader"]{background:transparent!important}'
+        f'[data-testid="stSidebar"]{{background:{t["side"]}!important}}'
+        f'.stApp h1,.stApp h2,.stApp h3,.stApp p,.stApp label,.stApp li,'
+        f'.stApp [data-testid="stMarkdownContainer"],.stApp [data-testid="stCaptionContainer"]'
+        f'{{color:{t["teks"]}!important}}'
+        f'[data-baseweb="input"],[data-baseweb="base-input"],[data-baseweb="select"]>div,textarea,input'
+        f'{{background-color:{t["input"]}!important;color:{t["teks"]}!important}}'
+        f'[data-testid="stExpander"]{{border-color:{t["garis"]}!important}}'
+        '.stApp .kartu,.stApp .kartu span,.stApp .kartu b{color:#25351B!important}'
+        '.stApp .hero .judul{color:#F1F7E4!important}.stApp .hero .kutip{color:#DDEBC3!important}'
+    )
+    return css
+
+
+_css = css_tampilan(st.session_state.get("mode_tampilan", "Otomatis"), foto_latar())
+if _css:
+    st.markdown(f"<style>{_css}</style>", unsafe_allow_html=True)
 
 st.session_state.setdefault("kutipan", random.choice(KUTIPAN))
 
@@ -108,6 +171,10 @@ with st.spinner("Memuat data..."):
 nama_musim = {m["id"]: f'{IKON.get(m["tanaman"], "🌱")} {m["tanaman"]} ({m["tanggal_tanam"]})' for m in musim}
 
 st.sidebar.title("🌱 SIA Usaha Tani")
+st.sidebar.radio(
+    "Tampilan", ["Otomatis", "Terang", "Gelap"], key="mode_tampilan",
+    format_func=lambda x: {"Otomatis": "🖥️ Otomatis (ikut perangkat)", "Terang": "☀️ Terang", "Gelap": "🌙 Gelap"}[x],
+)
 menu = st.sidebar.radio("Menu", ["📊 Laporan", "🌱 Musim Tanam", "💸 Biaya", "🧺 Penjualan", "💰 Pembayaran"])
 halaman = menu.split(" ", 1)[1]
 st.sidebar.caption("Terima kasih, petani Indonesia 🇮🇩")
@@ -201,7 +268,8 @@ elif halaman == "Biaya":
         df["musim"] = df["musim_tanam_id"].map(nama_musim)
         pilihan = {b["id"]: f'{b["tanggal"]} · {b["kategori"]} · {rp(b["jumlah"])}' for b in data}
         df["jumlah"] = df["jumlah"].map(rp)
-        st.subheader("20 catatan terakhir")
+        st.subheader("Riwayat biaya")
+        st.caption(f"Menampilkan {len(data)} data terbaru")
         st.dataframe(df[["tanggal", "musim", "kategori", "keterangan", "jumlah"]],
                      use_container_width=True, hide_index=True)
         hapus_ui("biaya", pilihan)
@@ -221,6 +289,8 @@ elif halaman == "Penjualan":
         if st.form_submit_button("Simpan penjualan"):
             if kg <= 0:
                 st.error("Jumlah kg harus lebih dari 0.")
+            elif str(tgl) < next(m["tanggal_tanam"] for m in musim if m["id"] == mid):
+                st.error("Tanggal penjualan tidak boleh lebih awal dari tanggal tanam.")
             else:
                 simpan("penjualan", {"musim_tanam_id": mid, "tanggal": str(tgl), "jenis_pembeli": jenis,
                                      "nama_pembeli": nama or None, "jumlah_kg": kg, "harga_per_kg": harga})
@@ -231,7 +301,8 @@ elif halaman == "Penjualan":
         pilihan = {p["id"]: f'{p["tanggal"]} · {p["nama_pembeli"] or p["jenis_pembeli"]} · {rp(p["total"])}'
                    for p in data}
         df["total"] = df["total"].map(rp)
-        st.subheader("20 penjualan terakhir")
+        st.subheader("Riwayat penjualan")
+        st.caption(f"Menampilkan {len(data)} data terbaru")
         st.dataframe(df[["tanggal", "musim", "jenis_pembeli", "nama_pembeli", "jumlah_kg",
                          "harga_per_kg", "total"]], use_container_width=True, hide_index=True)
         hapus_ui("penjualan", pilihan, "Menghapus penjualan juga menghapus pembayarannya.")
@@ -252,6 +323,8 @@ elif halaman == "Pembayaran":
         if st.form_submit_button("Simpan pembayaran"):
             if jml <= 0:
                 st.error("Jumlah harus lebih dari 0.")
+            elif str(tgl) < next(p["tanggal"] for p in jual if p["id"] == pid):
+                st.error("Tanggal diterima tidak boleh lebih awal dari tanggal penjualan.")
             else:
                 simpan("pembayaran", {"penjualan_id": pid, "tanggal": str(tgl),
                                       "jumlah": jml, "keterangan": ket or None})
@@ -261,7 +334,8 @@ elif halaman == "Pembayaran":
         df["penjualan"] = df["penjualan_id"].map(label)
         pilihan = {y["id"]: f'{y["tanggal"]} · {rp(y["jumlah"])}' for y in data}
         df["jumlah"] = df["jumlah"].map(rp)
-        st.subheader("20 pembayaran terakhir")
+        st.subheader("Riwayat pembayaran")
+        st.caption(f"Menampilkan {len(data)} data terbaru")
         st.dataframe(df[["tanggal", "penjualan", "jumlah", "keterangan"]],
                      use_container_width=True, hide_index=True)
         hapus_ui("pembayaran", pilihan)
