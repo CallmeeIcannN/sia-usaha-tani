@@ -53,9 +53,9 @@ def foto_latar():
 
 TEMA = {
     "Terang": dict(bg="#FFFFFF", teks="#1B2A16", side="#E7F0DA", input="#FFFFFF",
-                   garis="#C9D8B4", overlay="rgba(255,255,255,.86)"),
+                   garis="#C9D8B4", overlay="rgba(255,255,255,.78)"),
     "Gelap": dict(bg="#0E180E", teks="#EAF2DD", side="#16241A", input="#1F3023",
-                  garis="#35503A", overlay="rgba(14,24,14,.84)"),
+                  garis="#35503A", overlay="rgba(14,24,14,.70)"),
 }
 
 
@@ -66,12 +66,12 @@ def css_tampilan(mode, foto):
         if not foto:
             return ""
         return (f".stApp{{background-image:linear-gradient({ov},{ov}),var(--foto);"
-                "background-size:cover;background-position:center;background-attachment:fixed}")
+                "background-size:cover;background-position:center bottom;background-attachment:fixed}")
 
     if mode not in TEMA:  # Otomatis: ikut pengaturan perangkat
-        css += latar("rgba(255,255,255,.86)")
+        css += latar("rgba(255,255,255,.78)")
         if foto:
-            css += "@media (prefers-color-scheme:dark){" + latar("rgba(14,24,14,.84)") + "}"
+            css += "@media (prefers-color-scheme:dark){" + latar("rgba(14,24,14,.70)") + "}"
         return css
     t = TEMA[mode]
     css += latar(t["overlay"])
