@@ -38,17 +38,17 @@ st.markdown("""
 .block-container{max-width:1100px;padding-top:1.6rem;padding-bottom:4rem;animation:naik .45s ease both}
 @keyframes naik{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 .stApp h3{font-weight:800;font-size:1.25rem;margin-top:1.8rem}
-.hero2{position:relative;overflow:hidden;display:flex;align-items:center;min-height:250px;padding:34px 40px;margin-bottom:28px;
+.hero2{position:relative;overflow:hidden;display:flex;align-items:center;min-height:220px;padding:30px 40px;margin-bottom:28px;
  border-radius:26px 26px 100px 26px;color:#F5F0E1;
  background:linear-gradient(100deg,rgba(24,62,34,.96) 0 44%,rgba(24,62,34,.55) 100%),var(--foto);background-size:cover;background-position:center bottom}
-.hero2::after{content:"";position:absolute;right:-70px;bottom:-120px;width:360px;height:360px;background:var(--aksen,#F2C14E);
- border-radius:58% 42% 51% 49%/46% 55% 45% 54%;opacity:.92}
-.hero2 .isi{position:relative;z-index:2;max-width:560px}
+.hero2::after{content:"";position:absolute;right:-50px;bottom:-70px;width:220px;height:220px;background:var(--aksen,#F2C14E);border-radius:58% 42% 51% 49%/46% 55% 45% 54%;opacity:.9}
+.hero2::before{content:"";position:absolute;right:-140px;bottom:-190px;width:480px;height:480px;border-radius:50%;background:repeating-radial-gradient(circle,transparent 0 30px,rgba(245,240,225,.11) 30px 32px)}
+.hero2 .isi{position:relative;z-index:2;max-width:640px}
 .hero2 .tag{display:inline-block;font-weight:700;font-size:.85rem;background:rgba(245,240,225,.16);padding:4px 12px;border-radius:999px}
-.hero2 .judul{margin:14px 0 8px;font-size:2.35rem;font-weight:800;line-height:1.12;letter-spacing:-.02em;color:#F5F0E1}
+.hero2 .judul{text-wrap:balance;margin:14px 0 8px;font-size:2.15rem;font-weight:800;line-height:1.12;letter-spacing:-.02em;color:#F5F0E1}
 .hero2 .desk{font-size:1rem;color:#E6EFD2;max-width:46ch}
 .hero2 .kutip{margin-top:16px;padding-left:12px;border-left:3px solid var(--aksen,#F2C14E);font-size:.85rem;font-style:italic;color:#CFE0AE;max-width:56ch}
-.hero2 .tunas{position:absolute;right:58px;bottom:28px;width:150px;z-index:2}
+.hero2 .tunas{position:absolute;right:46px;bottom:24px;width:78px;z-index:2}
 .hero2.kuning{--aksen:#F2C14E}.hero2.hijau{--aksen:#8DBF4A}.hero2.oranye{--aksen:#E08A3C}.hero2.sage{--aksen:#9CCB9A}
 .fokus{margin:4px 0 10px;animation:naik .6s ease both}
 .fokus .lbl{font-weight:600;color:var(--muted);font-size:.95rem}
@@ -99,7 +99,7 @@ div.stButton>button,div.stFormSubmitButton>button{min-height:42px;border-radius:
 [data-testid="stSidebar"] [data-baseweb="select"]>div{background:#F5F0E1!important}
 [data-testid="stSidebar"] [data-baseweb="select"] *{color:#1E2A19!important}
 @media (max-width:640px){.hero2{padding:24px 22px 70px;min-height:0;border-radius:22px 22px 64px 22px}.hero2 .judul{font-size:1.65rem}
- .hero2 .tunas{width:84px;right:22px;bottom:14px}.fokus .angka{font-size:2.3rem}.pendukung{gap:20px}
+ .hero2 .tunas{width:58px;right:20px;bottom:14px}.hero2::after{width:150px;height:150px;right:-40px;bottom:-50px}.hero2::before{display:none}.fokus .angka{font-size:2.3rem}.pendukung{gap:20px}
  .tabel th,.tabel td{padding:10px 12px}}
 @media (prefers-reduced-motion:reduce){.block-container,.fokus{animation:none}div.stButton>button,div.stFormSubmitButton>button,.tabel tbody tr{transition:none}}
 </style>
