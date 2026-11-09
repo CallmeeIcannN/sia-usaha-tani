@@ -112,6 +112,7 @@ div.stButton>button,div.stFormSubmitButton>button,[data-testid="stPopover"]>butt
 .profil{display:flex;align-items:center;gap:10px;padding:10px 4px 0;color:var(--teks);font-size:.84rem}
 .profil .mark{width:34px;height:34px;border-radius:50%;overflow:hidden;display:flex;align-items:center;justify-content:center;background:var(--sl-bg);color:var(--sl-fg);font-weight:700;font-size:.8rem}
 .profil .mark img{width:100%;height:100%;object-fit:cover}.profil span{display:block;font-size:.72rem;color:var(--muted)}
+.tamu{margin:-8px 0 14px;display:inline-block;padding:4px 12px;border-radius:999px;background:var(--bl-bg);color:var(--bl-fg);font-size:.78rem;font-weight:600}
 @media (max-width:640px){.judul{font-size:1.35rem}.stat .v{font-size:1.25rem}}
 @media (prefers-reduced-motion:reduce){.dot{animation:none}}
 </style>
@@ -185,21 +186,7 @@ def sel(v):
     return html.escape(str(v)).replace("$", "&#36;")
 
 
-# ---------- Login ----------
-if not st.session_state.get("masuk"):
-    _, tengah, _ = st.columns([1, 1.1, 1])
-    with tengah:
-        st.markdown('<div class="logo" style="padding-top:12vh"><div class="mark">SG</div><div><b>SAWAL GROUP</b>'
-                    '<span>Usaha Tani · Catatan Keuangan</span></div></div>', unsafe_allow_html=True)
-        with st.container(border=True):
-            sandi = st.text_input("Kata sandi", type="password")
-            if st.button("Masuk", type="primary", width="stretch"):
-                if sandi == st.secrets["APP_PASSWORD"]:
-                    st.session_state["masuk"] = True
-                    st.rerun()
-                else:
-                    st.error("Kata sandi belum cocok. Coba ketik ulang dengan teliti.")
-    st.stop()
+admin = st.session_state.get("peran") == "admin"  # tamu hanya bisa melihat
 
 if "pesan" in st.session_state:
     st.toast(st.session_state.pop("pesan"))
@@ -289,6 +276,7 @@ def tabel(baris, kolom):
 
 def daftar(nama, baris, kolom, aksi=()):
     """Daftar dengan tombol aksi tiap baris. kolom: (judul, kunci, rata, lebar). aksi: [(lebar, fungsi(b))]."""
+    aksi = aksi if admin else ()
     baris = saring(baris)
     with st.container(border=True, key="daftar_" + nama):
         if not baris:
@@ -368,8 +356,23 @@ halaman = st.session_state["menu"]
 st.sidebar.divider()
 st.sidebar.selectbox("Tampilan", ["Terang", "Gelap", "Otomatis"], key="mode_tampilan",
                      format_func=lambda x: {"Terang": "Terang", "Gelap": "Gelap", "Otomatis": "Otomatis (ikut perangkat)"}[x])
-st.sidebar.markdown(f'<div class="profil"><div class="mark">{_mark if _ay else "P"}</div>'
-                    '<div>Pencatat keuangan<span>Akun pengelola</span></div></div>', unsafe_allow_html=True)
+if admin:
+    st.sidebar.markdown(f'<div class="profil"><div class="mark">{_mark if _ay else "P"}</div>'
+                        '<div>Pencatat keuangan<span>Akun pengelola</span></div></div>', unsafe_allow_html=True)
+    if st.sidebar.button("Keluar", key="keluar", width="stretch"):
+        st.session_state["peran"] = "tamu"
+        st.rerun()
+else:
+    st.sidebar.markdown('<div class="profil"><div class="mark">T</div><div>Tamu<span>Hanya bisa melihat</span></div></div>',
+                        unsafe_allow_html=True)
+    with st.sidebar.popover("Masuk pengelola", width="stretch"):
+        _sandi = st.text_input("Kata sandi", type="password", key="sandi_admin")
+        if st.button("Masuk", type="primary", key="btn_masuk", width="stretch"):
+            if _sandi == st.secrets["APP_PASSWORD"]:
+                st.session_state["peran"] = "admin"
+                st.rerun()
+            else:
+                st.error("Kata sandi belum cocok.")
 
 # ---------- Header ----------
 _t = date.today()
@@ -377,12 +380,15 @@ _k1, _k2, _k3 = st.columns([2.4, 2, 1.4], vertical_alignment="center")
 _k1.markdown(f'<div class="crumb">Dashboard / <b>{halaman}</b><span>{HARI[_t.weekday()]}, {_t.day:02d} '
              f'{BULAN[_t.month - 1]} {_t.year}</span></div>', unsafe_allow_html=True)
 _k2.text_input("Cari", key="cari", placeholder="Cari di halaman ini...", label_visibility="collapsed")
-with _k3.popover("+ Catat Transaksi", type="primary", width="stretch"):
-    for _n in ["Biaya", "Penjualan", "Pembayaran"]:
-        if st.button(_n, key="cta_" + _n, width="stretch"):
-            st.session_state["menu"] = _n
-            st.rerun()
+if admin:
+    with _k3.popover("+ Catat Transaksi", type="primary", width="stretch"):
+        for _n in ["Biaya", "Penjualan", "Pembayaran"]:
+            if st.button(_n, key="cta_" + _n, width="stretch"):
+                st.session_state["menu"] = _n
+                st.rerun()
 st.markdown(f'<div class="judul">{halaman}</div><div class="sub">{HALAMAN[halaman]}</div>', unsafe_allow_html=True)
+if not admin:
+    st.markdown('<div class="tamu">Mode tamu · hanya bisa melihat</div>', unsafe_allow_html=True)
 
 # ---------- Laporan ----------
 if halaman == "Laporan":
@@ -424,17 +430,18 @@ elif halaman == "Musim Tanam":
            ("Sedang Berjalan", ('<i class="dot"></i>' if n_jalan else "") + str(n_jalan)),
            ("Sudah Panen", str(len(musim) - n_jalan)),
            ("Total Luas Lahan", f'{sum(m["luas_ha"] or 0 for m in musim):g} Ha')])
-    kiri, kanan = st.columns([35, 65], gap="medium")
-    with kiri, st.container(border=True):
-        st.subheader("Tambah musim tanam")
-        with st.form("form_musim", clear_on_submit=True, border=False):
-            tanaman = st.selectbox("Komoditas", KOMODITAS)
-            tgl = st.date_input("Tanggal tanam", value=date.today())
-            luas = st.number_input("Luas lahan (hektar)", min_value=0.0, step=0.1)
-            catatan = st.text_input("Catatan (opsional)")
-            if st.form_submit_button("Simpan musim tanam", type="primary", width="stretch"):
-                simpan("musim_tanam", {"tanaman": tanaman, "tanggal_tanam": str(tgl),
-                                       "luas_ha": luas or None, "catatan": catatan or None})
+    kiri, kanan = st.columns([35, 65], gap="medium") if admin else (None, st.container())
+    if admin:
+        with kiri, st.container(border=True):
+            st.subheader("Tambah musim tanam")
+            with st.form("form_musim", clear_on_submit=True, border=False):
+                tanaman = st.selectbox("Komoditas", KOMODITAS)
+                tgl = st.date_input("Tanggal tanam", value=date.today())
+                luas = st.number_input("Luas lahan (hektar)", min_value=0.0, step=0.1)
+                catatan = st.text_input("Catatan (opsional)")
+                if st.form_submit_button("Simpan musim tanam", type="primary", width="stretch"):
+                    simpan("musim_tanam", {"tanaman": tanaman, "tanggal_tanam": str(tgl),
+                                           "luas_ha": luas or None, "catatan": catatan or None})
 
     def aksi_selesai(b):
         if b["status"] == "berjalan" and st.button("Selesai", key=f"sel_{b['id']}", width="stretch"):
@@ -475,18 +482,19 @@ elif halaman == "Biaya":
             f'<div class="bar"><div class="a">{KATEGORI[k][0]}<span>{rp(v)}</span></div>'
             f'<div class="t"><i style="width:{(v / mx * 100) if mx else 0:.0f}%"></i></div></div>'
             for k, v in sorted(per.items(), key=lambda x: -x[1])), unsafe_allow_html=True)
-    kiri, kanan = st.columns([35, 65], gap="medium")
-    with kiri, st.container(border=True):
-        st.subheader("Catat biaya operasional")
-        with st.form("form_biaya", clear_on_submit=True, border=False):
-            mid = st.selectbox("Musim tanam", list(nama_musim), format_func=nama_musim.get)
-            tgl = st.date_input("Tanggal", value=date.today())
-            kat = st.selectbox("Kategori", list(KATEGORI), format_func=lambda x: KATEGORI[x][0])
-            ket = st.text_input("Keterangan (opsional)")
-            jml = st.number_input("Jumlah (Rp)", min_value=0, step=1000, format="%d")
-            if st.form_submit_button("Simpan biaya", type="primary", width="stretch"):
-                simpan("biaya", {"musim_tanam_id": mid, "tanggal": str(tgl), "kategori": kat,
-                                 "keterangan": ket or None, "jumlah": jml})
+    kiri, kanan = st.columns([35, 65], gap="medium") if admin else (None, st.container())
+    if admin:
+        with kiri, st.container(border=True):
+            st.subheader("Catat biaya operasional")
+            with st.form("form_biaya", clear_on_submit=True, border=False):
+                mid = st.selectbox("Musim tanam", list(nama_musim), format_func=nama_musim.get)
+                tgl = st.date_input("Tanggal", value=date.today())
+                kat = st.selectbox("Kategori", list(KATEGORI), format_func=lambda x: KATEGORI[x][0])
+                ket = st.text_input("Keterangan (opsional)")
+                jml = st.number_input("Jumlah (Rp)", min_value=0, step=1000, format="%d")
+                if st.form_submit_button("Simpan biaya", type="primary", width="stretch"):
+                    simpan("biaya", {"musim_tanam_id": mid, "tanggal": str(tgl), "kategori": kat,
+                                     "keterangan": ket or None, "jumlah": jml})
     with kanan:
         st.subheader("Riwayat biaya")
         f1, f2 = st.columns(2)
@@ -538,19 +546,20 @@ elif halaman == "Penjualan":
         s["pesan"] = "Penjualan tersimpan."
         s["j_kg"], s["j_harga"], s["j_nama"] = 0.0, 0, ""
 
-    kiri, kanan = st.columns([35, 65], gap="medium")
-    with kiri, st.container(border=True):
-        st.subheader("Catat penjualan")
-        st.selectbox("Musim tanam", list(nama_musim), format_func=nama_musim.get, key="j_musim")
-        st.date_input("Tanggal", value=date.today(), key="j_tgl")
-        st.selectbox("Saluran penjualan", list(PEMBELI), format_func=lambda x: PEMBELI[x][0], key="j_jenis")
-        st.text_input("Nama pembeli (opsional)", key="j_nama")
-        st.number_input("Jumlah (kg)", min_value=0.0, step=10.0, key="j_kg")
-        st.number_input("Harga per kg (Rp)", min_value=0, step=100, format="%d", key="j_harga")
-        st.markdown(f'<div class="sub-total"><span>Subtotal</span><b>'
-                    f'{rp(st.session_state.get("j_kg", 0) * st.session_state.get("j_harga", 0))}</b></div>',
-                    unsafe_allow_html=True)
-        st.button("Simpan penjualan", type="primary", width="stretch", on_click=simpan_jual)
+    kiri, kanan = st.columns([35, 65], gap="medium") if admin else (None, st.container())
+    if admin:
+        with kiri, st.container(border=True):
+            st.subheader("Catat penjualan")
+            st.selectbox("Musim tanam", list(nama_musim), format_func=nama_musim.get, key="j_musim")
+            st.date_input("Tanggal", value=date.today(), key="j_tgl")
+            st.selectbox("Saluran penjualan", list(PEMBELI), format_func=lambda x: PEMBELI[x][0], key="j_jenis")
+            st.text_input("Nama pembeli (opsional)", key="j_nama")
+            st.number_input("Jumlah (kg)", min_value=0.0, step=10.0, key="j_kg")
+            st.number_input("Harga per kg (Rp)", min_value=0, step=100, format="%d", key="j_harga")
+            st.markdown(f'<div class="sub-total"><span>Subtotal</span><b>'
+                        f'{rp(st.session_state.get("j_kg", 0) * st.session_state.get("j_harga", 0))}</b></div>',
+                        unsafe_allow_html=True)
+            st.button("Simpan penjualan", type="primary", width="stretch", on_click=simpan_jual)
     with kanan:
         st.subheader("Riwayat penjualan")
         rows = [{"id": p["id"], "tgl": (p["tanggal"], nama_musim.get(p["musim_tanam_id"], "-")),
