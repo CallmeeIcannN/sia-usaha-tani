@@ -3,18 +3,19 @@ import base64
 import html
 import io
 import os
-import random
-import streamlit as st
-import pandas as pd
 from datetime import date
+
+import pandas as pd
+import streamlit as st
 from supabase import create_client
+
 
 def favicon():
     try:
         from PIL import Image, ImageDraw, ImageFont
         img = Image.new("RGBA", (96, 96), (0, 0, 0, 0))
         d = ImageDraw.Draw(img)
-        d.rounded_rectangle((0, 0, 95, 95), radius=22, fill="#2D6A3E")
+        d.rounded_rectangle((0, 0, 95, 95), radius=22, fill="#15803D")
         d.text((48, 50), "SG", font=ImageFont.load_default(size=44), fill="#FFFFFF", anchor="mm")
         return img
     except Exception:
@@ -23,113 +24,125 @@ def favicon():
 
 st.set_page_config(page_title="SAWAL GROUP", page_icon=favicon(), layout="wide")
 
-KUTIPAN = [
-    "Dari tanganmu di lahan, jutaan piring di Indonesia terisi. Terima kasih sudah bertani.",
-    "Setiap musim tanam adalah doa yang ditanam di tanah. Catat dengan rapi, panen dengan tenang.",
-    "Petani tidak hanya menanam, petani merawat masa depan bangsa.",
-    "Hujan dan kemarau tidak bisa dipilih, tapi catatan yang rapi membuat kita tetap tegak.",
-    "Pangan bangsa ini berdiri di atas kerja keras para petaninya.",
-    "Sedikit demi sedikit dicatat, lama-lama usaha tani terlihat jelas arahnya.",
-]
-DESK = {
-    "Laporan": "Ringkasan biaya, penjualan, piutang, dan laba tiap musim tanam.",
+KOMODITAS = ["Kentang", "Cabai", "Kobis", "Jagung"]
+KATEGORI = {"bibit": ("Bibit", "blue"), "pupuk": ("Pupuk", "ok"), "obat_tanaman": ("Pestisida", "amber"),
+            "upah": ("Upah", "slate"), "listrik": ("Operasional", "violet"), "lainnya": ("Lainnya", "rose")}
+PEMBELI = {"tengkulak": ("Tengkulak", "amber"), "mitra": ("Mitra", "blue"), "eceran": ("Eceran", "slate")}
+STATUS = {"selesai": ("ok", "Selesai"), "berjalan": ("ok", "Berjalan"), "lunas": ("ok", "Lunas"),
+          "sebagian": ("amber", "Cicilan"), "belum": ("rose", "Belum Lunas")}
+BULAN = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus",
+         "September", "Oktober", "November", "Desember"]
+HARI = ["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu", "Minggu"]
+HALAMAN = {
+    "Laporan": "Ringkasan keuangan dan kinerja tiap musim tanam.",
     "Musim Tanam": "Kelola data musim tanam dan aktivitas lahan.",
     "Biaya": "Catat dan pantau biaya operasional usaha tani.",
-    "Penjualan": "Catat hasil penjualan hasil pertanian.",
-    "Pembayaran": "Kelola transaksi pembayaran usaha tani.",
+    "Penjualan": "Catat hasil panen yang terjual berdasarkan saluran penjualan.",
+    "Pembayaran": "Pantau tagihan penjualan dan arus kas yang diterima.",
 }
-IKON = {"Kentang": "🥔", "Cabai": "🌶️", "Kobis": "🥬", "Jagung": "🌽"}
+MENU = [("Laporan", ":material/monitoring:"), ("Musim Tanam", ":material/potted_plant:"),
+        ("Biaya", ":material/receipt_long:"), ("Penjualan", ":material/shopping_basket:"),
+        ("Pembayaran", ":material/account_balance_wallet:")]
 
 st.markdown("""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
-:root{--foto:linear-gradient(#2A5A34,#2A5A34);--e1:0 1px 2px rgba(0,0,0,.14),0 1px 3px 1px rgba(0,0,0,.08)}
-.stApp *:not([data-testid="stIconMaterial"]):not(svg):not(path){font-family:'Roboto','Segoe UI',system-ui,sans-serif}
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+.stApp *:not([data-testid="stIconMaterial"]):not(svg):not(path){font-family:'Inter','Segoe UI',system-ui,sans-serif}
 .stApp{background:var(--bg)}
+[data-testid="stToolbar"],[data-testid="stDecoration"],[data-testid="stStatusWidget"],#MainMenu,footer,
+[data-testid="stAppDeployButton"],[class*="viewerBadge"],[class*="_profileContainer"]{display:none!important}
 [data-testid="stHeader"]{background:transparent}
-.block-container{max-width:1100px;padding-top:1.6rem;padding-bottom:4rem;animation:naik .4s ease both}
-@keyframes naik{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
-.stApp h3{font-weight:500;font-size:1.35rem;margin-top:2rem}
-.appbar{display:flex;overflow:hidden;min-height:190px;margin-bottom:28px;border-radius:28px;background:var(--pri-c);color:var(--on-pri-c);box-shadow:var(--e1)}
-.appbar .isi{flex:1 1 auto;padding:28px 32px;display:flex;flex-direction:column;justify-content:center}
-.appbar .tag{align-self:flex-start;font-size:.8rem;font-weight:500;padding:4px 12px;border-radius:8px;background:var(--ter-c);color:var(--on-ter-c)}
-.appbar .judul{margin:12px 0 6px;font-size:2rem;font-weight:500;line-height:1.2;text-wrap:balance}
-.appbar .desk{font-size:1rem;opacity:.85;max-width:50ch}
-.appbar .kutip{margin-top:12px;font-size:.85rem;font-style:italic;opacity:.7;max-width:56ch}
-.appbar .foto{flex:0 0 34%;background:var(--foto);background-size:cover;background-position:center bottom;border-radius:45% 0 0 45%/50% 0 0 50%}
-.metrikwrap,.tiles{display:flex;flex-wrap:wrap;gap:12px}.metrikwrap{margin:4px 0 8px}
-.metrik{flex:1.7 1 300px;background:var(--pri-c);color:var(--on-pri-c);border-radius:28px;padding:24px 28px;box-shadow:var(--e1)}
-.metrik.rugi{background:var(--err-c);color:var(--on-err-c)}.metrik.oranye{background:var(--ter-c);color:var(--on-ter-c)}
-.metrik .lbl{font-size:.9rem;font-weight:500;opacity:.8}
-.metrik .angka{font-size:3rem;font-weight:700;letter-spacing:-.02em;line-height:1.15;margin-top:4px}
-.tile{flex:1 1 150px;background:var(--card);border-radius:20px;padding:18px 20px;box-shadow:var(--e1)}
-.tile span{display:block;font-size:.8rem;color:var(--muted)}
-.tile b{display:block;margin-top:4px;font-size:1.2rem;font-weight:700;color:var(--teks)}
-.lini{list-style:none;margin:0 0 0 6px;padding:0 0 0 14px;border-left:2px solid var(--garis)}
-.lini li{position:relative;padding:0 0 18px 16px;color:var(--teks)}
-.lini li::before{content:"";position:absolute;left:-23px;top:5px;width:12px;height:12px;border-radius:50%;background:var(--pri);border:2px solid var(--bg)}
-.lini small{display:block;color:var(--muted);margin-top:2px}
-.buku{margin-top:1.1rem;background:var(--card);border:1px solid var(--garis);border-radius:14px;padding:4px 20px 12px}
-.buku .kepala{padding:14px 0 8px;font-size:.82rem;font-weight:500;color:var(--muted);border-bottom:1px solid var(--garis)}
-.rk{width:100%;border-collapse:collapse;color:var(--teks);font-size:.93rem}
-.rk td{padding:9px 0;border-bottom:1px dotted var(--garis)}.rk tr:last-child td{border-bottom:0}
-.rk .r{text-align:right;font-weight:500;font-variant-numeric:tabular-nums}
-.rk .th td{font-size:.78rem;color:var(--muted);font-weight:500}
-.tabelbox{background:var(--card);border-radius:16px;overflow-x:auto;box-shadow:var(--e1)}
-.tabel{width:100%;border-collapse:collapse;font-size:.92rem;color:var(--teks)}
-.tabel th{background:var(--head);font-weight:500;font-size:.8rem;color:var(--muted);padding:12px 16px;text-align:left;white-space:nowrap}
-.tabel td{padding:12px 16px;border-top:1px solid var(--garis)}
-.tabel .r{text-align:right;font-variant-numeric:tabular-nums}.tabel .c{text-align:center}
-.tabel tbody tr{transition:background .15s}.tabel tbody tr:hover{background:var(--hover)}
-.badge{display:inline-block;padding:3px 10px;border-radius:8px;font-size:.78rem;font-weight:500;white-space:nowrap}
-.badge.ok{background:rgba(62,142,65,.2);color:var(--ok)}.badge.jalan{background:rgba(217,154,27,.22);color:var(--warn)}
-.badge.belum{background:rgba(186,26,26,.14);color:var(--bad)}
-.kosong{background:var(--card);border:1px dashed var(--garis);border-radius:16px;padding:28px 16px;text-align:center;color:var(--teks)}
-.kosong .ik{font-size:1.8rem}.kosong b{display:block;margin-top:6px}
-.kosong span{display:block;margin-top:4px;font-size:.88rem;color:var(--muted)}
-[data-testid="stForm"]{background:var(--card);border:0;border-radius:24px;padding:22px;box-shadow:var(--e1)}
-[data-testid="stExpander"] details{background:var(--card);border:0!important;border-radius:16px;box-shadow:var(--e1)}
+.block-container{max-width:1240px;padding-top:1.4rem;padding-bottom:4rem}
+.stApp h3{font-weight:600;font-size:1.05rem;margin:1.4rem 0 .6rem;color:var(--teks)}
+.crumb{font-size:.88rem;color:var(--muted)}.crumb b{color:var(--teks);font-weight:600}.crumb span{display:block;font-size:.76rem;margin-top:2px}
+.judul{font-size:1.65rem;font-weight:700;letter-spacing:-.02em;color:var(--teks);margin:14px 0 2px}
+.sub{font-size:.92rem;color:var(--muted);margin-bottom:18px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-bottom:18px}
+.stat{background:var(--card);border:1px solid var(--garis);border-radius:12px;padding:16px 18px;box-shadow:0 1px 2px rgba(15,23,42,.06)}
+.stat .l{font-size:.8rem;color:var(--muted);font-weight:500}
+.stat .v{margin-top:6px;font-size:1.5rem;font-weight:700;letter-spacing:-.01em;font-variant-numeric:tabular-nums;color:var(--teks)}
+.stat .s{margin-top:4px;font-size:.78rem;color:var(--muted)}
+.stat.hl{background:var(--pri);border-color:var(--pri)}.stat.hl .l,.stat.hl .s{color:rgba(255,255,255,.88)}.stat.hl .v{color:#fff}
+.stat.ok .v{color:var(--ok-fg)}
+.dot{display:inline-block;width:8px;height:8px;margin-right:8px;border-radius:50%;background:var(--pri);animation:denyut 1.6s infinite}
+@keyframes denyut{0%{box-shadow:0 0 0 0 rgba(21,128,61,.5)}70%{box-shadow:0 0 0 7px rgba(21,128,61,0)}100%{box-shadow:0 0 0 0 rgba(21,128,61,0)}}
+.pill{display:inline-block;padding:2px 10px;border-radius:999px;font-size:.74rem;font-weight:600;white-space:nowrap}
+.pill.ok{background:var(--ok-bg);color:var(--ok-fg)}.pill.amber{background:var(--am-bg);color:var(--am-fg)}
+.pill.blue{background:var(--bl-bg);color:var(--bl-fg)}.pill.rose{background:var(--ro-bg);color:var(--ro-fg)}
+.pill.slate{background:var(--sl-bg);color:var(--sl-fg)}.pill.violet{background:var(--vi-bg);color:var(--vi-fg)}
+.pos{color:var(--ok-fg);font-weight:600}.neg{color:var(--ro-fg);font-weight:600}
+.mut{display:block;font-size:.74rem;color:var(--muted)}
+[data-testid="stVerticalBlockBorderWrapper"]{background:var(--card);border:1px solid var(--garis)!important;border-radius:12px;box-shadow:0 1px 2px rgba(15,23,42,.05)}
+.tabelbox{background:var(--card);border:1px solid var(--garis);border-radius:12px;overflow-x:auto;box-shadow:0 1px 2px rgba(15,23,42,.05)}
+.tabel{width:100%;border-collapse:collapse;font-size:.88rem;color:var(--teks)}
+.tabel th{background:var(--head);font-weight:600;font-size:.74rem;color:var(--muted);padding:10px 14px;text-align:left;white-space:nowrap}
+.tabel td{padding:11px 14px;border-top:1px solid var(--garis);font-variant-numeric:tabular-nums}
+.tabel .r,.th.r,.td.r{text-align:right}.tabel .c,.th.c,.td.c{text-align:center}
+.tabel tbody tr:hover{background:var(--hover)}
+.th{font-size:.74rem;font-weight:600;color:var(--muted)}.td{font-size:.88rem;color:var(--teks);font-variant-numeric:tabular-nums}
+[class*="st-key-daftar_"] [data-testid="stVerticalBlock"]{gap:0}
+[class*="st-key-daftar_"] [data-testid="stHorizontalBlock"]{padding:7px 8px;border-bottom:1px solid var(--garis);align-items:center}
+[class*="st-key-daftar_"] [data-testid="stHorizontalBlock"]:hover{background:var(--hover)}
+[class*="st-key-daftar_"] .stButton>button,[class*="st-key-daftar_"] [data-testid="stPopover"]>button{min-height:30px;padding:0 10px;font-size:.78rem;border-radius:8px}
+.kosong{border:1px dashed var(--garis);border-radius:12px;padding:26px 16px;text-align:center;color:var(--teks);background:var(--card)}
+.kosong b{display:block}.kosong span{display:block;margin-top:4px;font-size:.86rem;color:var(--muted)}
+.bar{margin:10px 0}.bar .a{display:flex;justify-content:space-between;font-size:.84rem;color:var(--teks)}.bar .a span{color:var(--muted);font-variant-numeric:tabular-nums}
+.bar .t{height:8px;border-radius:99px;background:var(--head);margin-top:5px;overflow:hidden}.bar .t i{display:block;height:100%;background:var(--pri);border-radius:99px}
+.sub-total{background:var(--head);border-radius:10px;padding:12px 14px;margin:4px 0 12px;display:flex;justify-content:space-between;align-items:center;color:var(--teks)}
+.sub-total span{font-size:.8rem;color:var(--muted)}.sub-total b{font-size:1.2rem;font-variant-numeric:tabular-nums}
 [data-baseweb="input"],[data-baseweb="base-input"],[data-baseweb="select"]>div{border-radius:8px!important}
-[data-baseweb="input"]:focus-within{border-color:var(--pri)!important;box-shadow:0 0 0 1px var(--pri)!important}
-[data-testid="stNumberInputStepUp"],[data-testid="stNumberInputStepDown"]{background:transparent!important}
-[data-testid="stNumberInputStepUp"]:hover,[data-testid="stNumberInputStepDown"]:hover{background:var(--hover)!important}
-div.stButton>button,div.stFormSubmitButton>button{min-height:40px;padding:0 24px;border-radius:20px;font-weight:500;transition:box-shadow .15s,filter .15s}
-div.stButton>button:hover,div.stFormSubmitButton>button:hover{box-shadow:var(--e1);filter:brightness(1.06)}
-[data-testid^="stBaseButton-primary"]{background:var(--pri)!important;color:var(--on-pri)!important;border:0!important}
-[data-testid^="stBaseButton-secondary"]{background:var(--sek-c)!important;color:var(--on-sek-c)!important;border:0!important}
-[class*="st-key-b_"] button{background:var(--bad)!important;color:var(--bg)!important;border:0!important}
-[class*="st-key-b_"] button:disabled{opacity:.4}
-[data-testid="stSidebar"]{background:var(--card)!important;border-radius:0 28px 28px 0}
-.logo{display:flex;align-items:center;gap:12px;padding:6px 6px 20px}
-.logo .mark{flex:none;width:54px;height:54px;border-radius:50%;overflow:hidden;display:flex;align-items:center;justify-content:center;
- background:var(--pri);color:var(--on-pri);font-weight:700;font-size:1.1rem;letter-spacing:.04em;box-shadow:var(--e1)}
+[data-baseweb="input"]:focus-within{border-color:var(--pri)!important;box-shadow:0 0 0 3px rgba(21,128,61,.2)!important}
+div.stButton>button,div.stFormSubmitButton>button,[data-testid="stPopover"]>button{min-height:38px;border-radius:8px;font-weight:600;transition:background .15s,box-shadow .15s}
+[data-testid^="stBaseButton-primary"]{background:var(--pri)!important;color:#fff!important;border:0!important}
+[data-testid^="stBaseButton-primary"]:hover{filter:brightness(.92)}
+[data-testid^="stBaseButton-secondary"]{background:var(--card)!important;color:var(--teks)!important;border:1px solid var(--garis)!important}
+[data-testid^="stBaseButton-secondary"]:hover{background:var(--hover)!important}
+[class*="st-key-b_"] button{background:var(--ro-fg)!important;color:#fff!important;border:0!important}
+[data-testid="stSidebar"]{background:var(--card)!important;border-right:1px solid var(--garis)}
+.logo{display:flex;align-items:center;gap:11px;padding:4px 4px 18px}
+.logo .mark{flex:none;width:42px;height:42px;border-radius:10px;overflow:hidden;display:flex;align-items:center;justify-content:center;background:var(--pri);color:#fff;font-weight:700;font-size:.95rem}
 .logo .mark img{width:100%;height:100%;object-fit:cover}
-.logo .nama b{display:block;font-size:1.1rem;font-weight:700;letter-spacing:.06em;color:var(--teks)}
-.logo .nama span{display:block;margin-top:2px;font-size:.78rem;line-height:1.3;color:var(--muted)}
-[data-testid="stSidebar"] .stButton>button{justify-content:flex-start;gap:10px;min-height:48px;border-radius:28px;background:transparent!important;color:var(--teks)!important}
-[data-testid="stSidebar"] .stButton>button:hover{background:var(--hover)!important;box-shadow:none;filter:none}
-[data-testid="stSidebar"] .stButton>button[data-testid="stBaseButton-primary"]{background:var(--sek-c)!important;color:var(--on-sek-c)!important;font-weight:700}
+.logo b{display:block;font-size:.98rem;font-weight:700;letter-spacing:.04em;color:var(--teks)}.logo span{display:block;font-size:.72rem;color:var(--muted)}
+[data-testid="stSidebar"] .stButton>button{justify-content:flex-start!important;gap:10px;min-height:40px;border:0!important;background:transparent!important;color:var(--muted)!important;font-weight:500}
 [data-testid="stSidebar"] .stButton>button>div{justify-content:flex-start!important;width:100%}
 [data-testid="stSidebar"] .stButton>button p{text-align:left}
-[data-testid="stSidebar"] [data-testid="stVerticalBlock"]{gap:.4rem}
-@media (max-width:640px){.appbar{flex-direction:column-reverse;min-height:0}.appbar .foto{flex:0 0 110px;border-radius:0 0 45% 45%/0 0 60% 60%}
- .appbar .isi{padding:22px}.appbar .judul{font-size:1.6rem}.metrik .angka{font-size:2.2rem}.tabel th,.tabel td{padding:10px 12px}}
-@media (prefers-reduced-motion:reduce){.block-container{animation:none}div.stButton>button,div.stFormSubmitButton>button,.tabel tbody tr{transition:none}}
+[data-testid="stSidebar"] .stButton>button:hover{background:var(--hover)!important;color:var(--teks)!important}
+[data-testid="stSidebar"] .stButton>button[data-testid="stBaseButton-primary"]{background:var(--ok-bg)!important;color:var(--ok-fg)!important;font-weight:600}
+[data-testid="stSidebar"] [data-testid="stVerticalBlock"]{gap:.3rem}
+.profil{display:flex;align-items:center;gap:10px;padding:10px 4px 0;color:var(--teks);font-size:.84rem}
+.profil .mark{width:34px;height:34px;border-radius:50%;overflow:hidden;display:flex;align-items:center;justify-content:center;background:var(--sl-bg);color:var(--sl-fg);font-weight:700;font-size:.8rem}
+.profil .mark img{width:100%;height:100%;object-fit:cover}.profil span{display:block;font-size:.72rem;color:var(--muted)}
+@media (max-width:640px){.judul{font-size:1.35rem}.stat .v{font-size:1.25rem}}
+@media (prefers-reduced-motion:reduce){.dot{animation:none}}
 </style>
 """, unsafe_allow_html=True)
 
-@st.cache_data
-def foto_latar():
-    """Cari foto latar (nama file diawali 'latar') di folder aplikasi, perkecil, ubah ke base64."""
-    from PIL import Image
-    for nama in sorted(os.listdir(".")):
-        if nama.lower().startswith("latar") and nama.lower().endswith((".jpg", ".jpeg", ".png")):
-            img = Image.open(nama).convert("RGB")
-            img.thumbnail((1600, 1600))
-            buf = io.BytesIO()
-            img.save(buf, "JPEG", quality=70)
-            return base64.b64encode(buf.getvalue()).decode()
-    return None
+LIGHT = ("--bg:#F8FAFC;--card:#FFFFFF;--garis:#E2E8F0;--muted:#64748B;--head:#F1F5F9;--hover:#F1F5F9;--teks:#0F172A;"
+         "--pri:#15803D;--ok-bg:#DCFCE7;--ok-fg:#166534;--am-bg:#FEF3C7;--am-fg:#B45309;--bl-bg:#DBEAFE;--bl-fg:#1D4ED8;"
+         "--ro-bg:#FFE4E6;--ro-fg:#BE123C;--sl-bg:#E2E8F0;--sl-fg:#334155;--vi-bg:#EDE9FE;--vi-fg:#6D28D9")
+DARK = ("--bg:#0B1220;--card:#111A2C;--garis:#1F2A3F;--muted:#94A3B8;--head:#16213A;--hover:#16213A;--teks:#E2E8F0;"
+        "--pri:#16A34A;--ok-bg:#14532D;--ok-fg:#86EFAC;--am-bg:#451A03;--am-fg:#FCD34D;--bl-bg:#1E3A8A;--bl-fg:#93C5FD;"
+        "--ro-bg:#4C0519;--ro-fg:#FDA4AF;--sl-bg:#1E293B;--sl-fg:#CBD5E1;--vi-bg:#2E1065;--vi-fg:#C4B5FD")
+
+
+def css_tampilan(mode):
+    if mode == "Gelap":
+        return (f":root{{{DARK}}}.stApp{{background-color:#0B1220!important;color:#E2E8F0!important}}"
+                '.stApp h1,.stApp h2,.stApp h3,.stApp p,.stApp label,.stApp li,'
+                '.stApp [data-testid="stMarkdownContainer"],.stApp [data-testid="stCaptionContainer"]{color:#E2E8F0!important}'
+                '.stApp [data-baseweb="input"],.stApp [data-baseweb="base-input"],.stApp [data-baseweb="select"]>div,'
+                '.stApp textarea,.stApp input{background-color:#16213A!important;color:#E2E8F0!important}')
+    if mode == "Terang":
+        return (f":root{{{LIGHT}}}.stApp{{background-color:#F8FAFC!important;color:#0F172A!important}}"
+                '.stApp h1,.stApp h2,.stApp h3,.stApp p,.stApp label,.stApp li,'
+                '.stApp [data-testid="stMarkdownContainer"],.stApp [data-testid="stCaptionContainer"]{color:#0F172A!important}'
+                '.stApp [data-baseweb="input"],.stApp [data-baseweb="base-input"],.stApp [data-baseweb="select"]>div,'
+                '.stApp textarea,.stApp input{background-color:#FFFFFF!important;color:#0F172A!important}')
+    return f":root{{{LIGHT}}}@media (prefers-color-scheme:dark){{:root{{{DARK}}}}}"
+
+
+st.session_state.setdefault("mode_tampilan", "Terang")
+st.markdown(f"<style>{css_tampilan(st.session_state['mode_tampilan'])}</style>", unsafe_allow_html=True)
 
 
 @st.cache_data
@@ -146,51 +159,6 @@ def foto_ayah():
     return None
 
 
-LIGHT = ("--bg:#F6FBF1;--card:#EAF0E4;--garis:#C1C9BC;--muted:#414941;--head:#DDE5D6;--hover:rgba(45,106,62,.08);"
-         "--teks:#181D17;--ok:#1B5E20;--warn:#6B4F00;--bad:#BA1A1A;--pri:#2D6A3E;--on-pri:#FFFFFF;--pri-c:#BDEDC3;"
-         "--on-pri-c:#00210D;--sek-c:#D6E8D2;--on-sek-c:#111F13;--ter-c:#FFDF9B;--on-ter-c:#251A00;--err-c:#FFDAD6;--on-err-c:#410002")
-DARK = ("--bg:#101512;--card:#1A211C;--garis:#414941;--muted:#C1C9BC;--head:#232B25;--hover:rgba(160,214,167,.10);"
-        "--teks:#E0E4DA;--ok:#8FD99A;--warn:#F0C463;--bad:#FFB4AB;--pri:#8FD99A;--on-pri:#00391A;--pri-c:#1B5030;"
-        "--on-pri-c:#B8F0BF;--sek-c:#3A4B3C;--on-sek-c:#D6E8D2;--ter-c:#5A4300;--on-ter-c:#FFDF9B;--err-c:#93000A;--on-err-c:#FFDAD6")
-TEMA = {
-    "Terang": dict(vars=LIGHT, bg="#F6FBF1", teks="#181D17", input="#FFFFFF"),
-    "Gelap": dict(vars=DARK, bg="#101512", teks="#E0E4DA", input="#232B25"),
-}
-
-
-def css_tampilan(mode, foto):
-    css = f":root{{--foto:url(data:image/jpeg;base64,{foto})}}" if foto else ""
-    if mode not in TEMA:  # Otomatis: ikut pengaturan perangkat
-        return css + f":root{{{LIGHT}}}@media (prefers-color-scheme:dark){{:root{{{DARK}}}}}"
-    t = TEMA[mode]
-    return css + f":root{{{t['vars']}}}" + (
-        f'.stApp{{background-color:{t["bg"]}!important;color:{t["teks"]}!important}}'
-        f'.stApp h1,.stApp h2,.stApp h3,.stApp p,.stApp label,.stApp li,'
-        f'.stApp [data-testid="stMarkdownContainer"],.stApp [data-testid="stCaptionContainer"]'
-        f'{{color:{t["teks"]}!important}}'
-        f'.stApp [data-baseweb="input"],.stApp [data-baseweb="base-input"],.stApp [data-baseweb="select"]>div,'
-        f'.stApp textarea,.stApp input{{background-color:{t["input"]}!important;color:{t["teks"]}!important}}'
-    )
-
-
-_css = css_tampilan(st.session_state.get("mode_tampilan", "Otomatis"), foto_latar())
-st.markdown(f"<style>{_css}</style>", unsafe_allow_html=True)
-
-st.session_state.setdefault("kutipan", random.choice(KUTIPAN))
-
-HERO = {
-    "Laporan": ("Laporan", "Pantau kondisi keuangan usaha tani", "Biaya, penjualan, dan laba dalam satu tampilan.", "kuning"),
-    "Musim Tanam": ("Musim Tanam", "Kelola musim tanam di lahanmu", "Kelola data musim tanam dan aktivitas lahan.", "hijau"),
-    "Biaya": ("Biaya", "Catat setiap pengeluaran", "Agar kondisi usaha tani tetap terkontrol.", "oranye"),
-    "Penjualan": ("Penjualan", "Hasil usaha tani", "Catat hasil panen yang terjual dan pantau pendapatan.", "kuning"),
-    "Pembayaran": ("Pembayaran", "Arus pembayaran", "Pantau uang yang sudah diterima dan sisa piutang.", "sage"),
-}
-STATUS = {"selesai": ("ok", "Selesai"), "berjalan": ("jalan", "Berjalan"), "lunas": ("ok", "Lunas"),
-          "sebagian": ("jalan", "Sebagian"), "belum": ("belum", "Belum dibayar")}
-BULAN = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus",
-         "September", "Oktober", "November", "Desember"]
-
-
 def tgl_id(s):
     try:
         y, m, d = str(s)[:10].split("-")
@@ -199,32 +167,16 @@ def tgl_id(s):
         return str(s)
 
 
-def hero(tag, judul, desk="", aksen=""):
-    st.markdown(
-        f'<div class="appbar"><div class="isi"><span class="tag">{tag}</span>'
-        f'<div class="judul">{judul}</div><div class="desk">{desk}</div>'
-        f'<div class="kutip">“{st.session_state["kutipan"]}”</div></div><div class="foto"></div></div>',
-        unsafe_allow_html=True,
-    )
+def bln_thn(s):
+    try:
+        y, m, _ = str(s)[:10].split("-")
+        return f"{BULAN[int(m) - 1][:3]} {y}"
+    except Exception:
+        return str(s)
 
 
-def tiles(items):
-    return "".join(f'<div class="tile"><span>{k}</span><b>{v}</b></div>' for k, v in items)
-
-
-def pendukung(items):
-    return f'<div class="tiles">{tiles(items)}</div>'
-
-
-def fokus(label, nilai, items, kelas=""):
-    st.markdown(f'<div class="metrikwrap"><div class="metrik {kelas}"><div class="lbl">{label}</div>'
-                f'<div class="angka">{nilai}</div></div>{tiles(items)}</div>', unsafe_allow_html=True)
-
-
-def kosong(judul="Belum ada data transaksi",
-           ket="Tambahkan transaksi pertama untuk mulai mencatat aktivitas usaha tani."):
-    st.markdown(f'<div class="kosong"><div class="ik">📋</div><b>{judul}</b><span>{ket}</span></div>',
-                unsafe_allow_html=True)
+def rp(x):
+    return "Rp {:,.0f}".format(x or 0).replace(",", ".")
 
 
 def sel(v):
@@ -233,58 +185,26 @@ def sel(v):
     return html.escape(str(v)).replace("$", "&#36;")
 
 
-def tabel(baris, kolom):
-    """kolom: daftar (judul, kunci, rata) dengan rata l/r/c. Isi sel di-escape agar aman."""
-    if not baris:
-        kosong()
-        return
-    th = "".join(f'<th class="{r}">{html.escape(j)}</th>' for j, _, r in kolom)
-    tr = ""
-    for b in baris:
-        td = ""
-        for _, k, r in kolom:
-            v = b.get(k)
-            if k == "status":
-                kls, teks = STATUS.get(v, ("jalan", sel(v)))
-                isi = f'<span class="badge {kls}">● {teks}</span>'
-            else:
-                isi = sel(v)
-            td += f'<td class="{r}">{isi}</td>'
-        tr += f"<tr>{td}</tr>"
-    st.markdown(f'<div class="tabelbox"><table class="tabel"><thead><tr>{th}</tr></thead>'
-                f'<tbody>{tr}</tbody></table></div>', unsafe_allow_html=True)
-
-
-def grafik(df):
-    d = df.assign(label=df["tanaman"] + " " + df["tanggal_tanam"].astype(str))
-    d = pd.concat([
-        d[["label"]].assign(jenis="Biaya", juta=pd.to_numeric(d["total_biaya"]) / 1e6),
-        d[["label"]].assign(jenis="Penjualan", juta=pd.to_numeric(d["total_penjualan"]) / 1e6),
-    ])
-    return (alt.Chart(d).mark_bar(cornerRadiusTopLeft=5, cornerRadiusTopRight=5)
-            .encode(x=alt.X("label:N", title=None, axis=alt.Axis(labelAngle=0, labelLimit=90)),
-                    xOffset="jenis:N", y=alt.Y("juta:Q", title="Juta rupiah"),
-                    color=alt.Color("jenis:N", title=None, legend=alt.Legend(orient="top"),
-                                    scale=alt.Scale(domain=["Biaya", "Penjualan"], range=["#D9822B", "#3E8E41"])),
-                    tooltip=[alt.Tooltip("label:N", title="Musim"), alt.Tooltip("jenis:N", title="Jenis"),
-                             alt.Tooltip("juta:Q", title="Juta Rp", format=",.1f")])
-            .properties(height=300))
-
-
 # ---------- Login ----------
 if not st.session_state.get("masuk"):
-    hero("SAWAL GROUP", "Catatan keuangan usaha tani", "Masuk untuk membuka catatan usaha tani.")
-    sandi = st.text_input("Kata sandi", type="password")
-    if st.button("Masuk", type="primary"):
-        if sandi == st.secrets["APP_PASSWORD"]:
-            st.session_state["masuk"] = True
-            st.rerun()
-        else:
-            st.error("Kata sandi belum cocok. Coba ketik ulang dengan teliti.")
+    _, tengah, _ = st.columns([1, 1.1, 1])
+    with tengah:
+        st.markdown('<div class="logo" style="padding-top:12vh"><div class="mark">SG</div><div><b>SAWAL GROUP</b>'
+                    '<span>Usaha Tani · Catatan Keuangan</span></div></div>', unsafe_allow_html=True)
+        with st.container(border=True):
+            sandi = st.text_input("Kata sandi", type="password")
+            if st.button("Masuk", type="primary", width="stretch"):
+                if sandi == st.secrets["APP_PASSWORD"]:
+                    st.session_state["masuk"] = True
+                    st.rerun()
+                else:
+                    st.error("Kata sandi belum cocok. Coba ketik ulang dengan teliti.")
     st.stop()
 
 if "pesan" in st.session_state:
     st.toast(st.session_state.pop("pesan"))
+if "galat" in st.session_state:
+    st.error(st.session_state.pop("galat"))
 
 
 @st.cache_resource
@@ -295,10 +215,6 @@ def koneksi():
 db = koneksi()
 
 
-def rp(x):
-    return "Rp {:,.0f}".format(x or 0).replace(",", ".")
-
-
 def ambil(tabel, urut="id"):
     return db.table(tabel).select("*").order(urut, desc=True).execute().data
 
@@ -306,42 +222,143 @@ def ambil(tabel, urut="id"):
 def simpan(tabel, data):
     try:
         db.table(tabel).insert(data).execute()
-        st.session_state["pesan"] = "Data tersimpan ✅ Terima kasih sudah mencatat."
+        st.session_state["pesan"] = "Data tersimpan."
         st.rerun()
     except Exception as e:
         st.error(f"Data belum tersimpan. Periksa isian lalu coba lagi. ({e})")
 
 
-def hapus_ui(tabel, pilihan, catatan=""):
-    if not pilihan:
+def hapus(tabel, i):
+    db.table(tabel).delete().eq("id", i).execute()
+    st.session_state["pesan"] = "Data sudah dihapus."
+    st.rerun()
+
+
+# ---------- Komponen tampilan ----------
+def stat(label, nilai, sub="", kelas=""):
+    s = f'<div class="s">{sub}</div>' if sub else ""
+    return f'<div class="stat {kelas}"><div class="l">{label}</div><div class="v">{nilai}</div>{s}</div>'
+
+
+def stats(items):
+    st.markdown('<div class="stats">' + "".join(stat(*i) for i in items) + "</div>", unsafe_allow_html=True)
+
+
+def kosong(judul="Belum ada data", ket="Tambahkan data pertama untuk mulai mencatat aktivitas usaha tani."):
+    st.markdown(f'<div class="kosong"><b>{judul}</b><span>{ket}</span></div>', unsafe_allow_html=True)
+
+
+def sel_html(b, k):
+    v = b.get(k)
+    if k == "status":
+        kls, t = STATUS.get(v, ("slate", sel(v)))
+        dot = '<i class="dot"></i>' if v == "berjalan" else ""
+        return f'<span class="pill {kls}">{dot}{t}</span>'
+    if k == "saluran":
+        t, kls = PEMBELI.get(v, (sel(v), "slate"))
+        return f'<span class="pill {kls}">{t}</span>'
+    if k == "kategori":
+        t, kls = KATEGORI.get(v, (sel(v), "slate"))
+        return f'<span class="pill {kls}">{t}</span>'
+    if k == "laba":
+        return f'<span class="{"pos" if b.get("_laba", 0) >= 0 else "neg"}">{sel(v)}</span>'
+    if isinstance(v, tuple):
+        return f'{sel(v[0])}<small class="mut">{sel(v[1])}</small>'
+    return sel(v)
+
+
+def saring(baris):
+    q = st.session_state.get("cari", "").strip().lower()
+    if not q:
+        return baris
+    return [b for b in baris if any(q in str(v).lower() for v in b.values())]
+
+
+def tabel(baris, kolom):
+    """Tabel statis. kolom: (judul, kunci, rata)."""
+    baris = saring(baris)
+    if not baris:
+        kosong()
         return
-    with st.expander("🗑️ Hapus data"):
-        if catatan:
-            st.caption(catatan)
-        pid = st.selectbox("Pilih data", list(pilihan), format_func=pilihan.get, key="h_" + tabel)
-        yakin = st.checkbox("Saya yakin ingin menghapus data ini", key="y_" + tabel)
-        if st.button("Hapus data", disabled=not yakin, key="b_" + tabel):
-            db.table(tabel).delete().eq("id", pid).execute()
-            st.session_state["pesan"] = "Data sudah dihapus 🗑️"
-            st.rerun()
+    th = "".join(f'<th class="{r}">{html.escape(j)}</th>' for j, _, r in kolom)
+    tr = "".join("<tr>" + "".join(f'<td class="{r}">{sel_html(b, k)}</td>' for _, k, r in kolom) + "</tr>"
+                 for b in baris)
+    st.markdown(f'<div class="tabelbox"><table class="tabel"><thead><tr>{th}</tr></thead>'
+                f'<tbody>{tr}</tbody></table></div>', unsafe_allow_html=True)
 
 
+def daftar(nama, baris, kolom, aksi=()):
+    """Daftar dengan tombol aksi tiap baris. kolom: (judul, kunci, rata, lebar). aksi: [(lebar, fungsi(b))]."""
+    baris = saring(baris)
+    with st.container(border=True, key="daftar_" + nama):
+        if not baris:
+            kosong()
+            return
+        lebar = [k[3] for k in kolom] + [a[0] for a in aksi]
+        h = st.columns(lebar, vertical_alignment="center")
+        for c, k in zip(h, kolom):
+            c.markdown(f'<div class="th {k[2]}">{html.escape(k[0])}</div>', unsafe_allow_html=True)
+        for b in baris:
+            cs = st.columns(lebar, vertical_alignment="center")
+            for c, k in zip(cs, kolom):
+                c.markdown(f'<div class="td {k[2]}">{sel_html(b, k[1])}</div>', unsafe_allow_html=True)
+            for c, a in zip(cs[len(kolom):], aksi):
+                with c:
+                    a[1](b)
+
+
+def aksi_hapus(tabel_db, kunci, peringatan="Hapus data ini?"):
+    def f(b):
+        with st.popover("Hapus", width="stretch"):
+            st.caption(peringatan)
+            if st.button("Ya, hapus", key=f"b_{kunci}_{b['id']}", width="stretch"):
+                hapus(tabel_db, b["id"])
+    return f
+
+
+# ---------- Grafik ----------
+def grafik(df):
+    d = df.copy()
+    d["label"] = d["tanaman"] + " - " + d["tanggal_tanam"].map(bln_thn)
+    d["label"] = d["label"] + d.groupby("label").cumcount().map(lambda n: "" if n == 0 else f" ({n + 1})")
+    p = pd.concat([d[["label"]].assign(jenis="Pendapatan", juta=pd.to_numeric(d["total_penjualan"]) / 1e6),
+                   d[["label"]].assign(jenis="Biaya", juta=pd.to_numeric(d["total_biaya"]) / 1e6)])
+    return (alt.Chart(p).mark_bar(cornerRadiusTopLeft=4, cornerRadiusTopRight=4)
+            .encode(x=alt.X("label:N", title=None, axis=alt.Axis(labelAngle=0, labelLimit=110)), xOffset="jenis:N",
+                    y=alt.Y("juta:Q", title="Juta rupiah"),
+                    color=alt.Color("jenis:N", title=None, legend=alt.Legend(orient="top"),
+                                    scale=alt.Scale(domain=["Pendapatan", "Biaya"], range=["#15803D", "#E11D48"])),
+                    tooltip=[alt.Tooltip("label:N", title="Musim"), alt.Tooltip("jenis:N", title="Jenis"),
+                             alt.Tooltip("juta:Q", title="Juta Rp", format=",.1f")])
+            .properties(height=300))
+
+
+def donat(df):
+    d = df.assign(juta=pd.to_numeric(df["total_penjualan"]) / 1e6).groupby("tanaman", as_index=False)["juta"].sum()
+    return (alt.Chart(d).mark_arc(innerRadius=62, outerRadius=105)
+            .encode(theta="juta:Q",
+                    color=alt.Color("tanaman:N", title=None, legend=alt.Legend(orient="bottom"),
+                                    scale=alt.Scale(range=["#15803D", "#F59E0B", "#0EA5E9", "#94A3B8"])),
+                    tooltip=[alt.Tooltip("tanaman:N", title="Komoditas"), alt.Tooltip("juta:Q", title="Juta Rp", format=",.1f")])
+            .properties(height=300))
+
+
+# ---------- Data ----------
 with st.spinner("Memuat data..."):
     musim = ambil("musim_tanam")
-nama_musim = {m["id"]: f'{IKON.get(m["tanaman"], "🌱")} {m["tanaman"]} ({m["tanggal_tanam"]})' for m in musim}
+    biaya_all = ambil("biaya")
+    jual_all = ambil("penjualan")
+    bayar_all = ambil("pembayaran")
+nama_musim = {m["id"]: f'{m["tanaman"]} · {tgl_id(m["tanggal_tanam"])}' for m in musim}
 
-# ---------- Navigasi ----------
-MENU = [("Laporan", ":material/monitoring:"), ("Musim Tanam", ":material/potted_plant:"),
-        ("Biaya", ":material/receipt_long:"), ("Penjualan", ":material/shopping_basket:"),
-        ("Pembayaran", ":material/account_balance_wallet:")]
+# ---------- Sidebar ----------
 st.session_state.setdefault("menu", "Laporan")
 if st.session_state["menu"] not in dict(MENU):
     st.session_state["menu"] = "Laporan"
 _ay = foto_ayah()
 _mark = f'<img src="data:image/jpeg;base64,{_ay}" alt="">' if _ay else "SG"
-st.sidebar.markdown(
-    f'<div class="logo"><div class="mark">{_mark}</div><div class="nama"><b>SAWAL GROUP</b>'
-    '<span>Usaha tani · catatan keuangan</span></div></div>', unsafe_allow_html=True)
+st.sidebar.markdown(f'<div class="logo"><div class="mark">{_mark}</div><div><b>SAWAL GROUP</b>'
+                    '<span>Usaha Tani · Catatan Keuangan</span></div></div>', unsafe_allow_html=True)
 for nama, ikon in MENU:
     if st.sidebar.button(nama, icon=ikon, key="nav_" + nama.replace(" ", "_"), width="stretch",
                          type="primary" if st.session_state["menu"] == nama else "secondary"):
@@ -349,222 +366,253 @@ for nama, ikon in MENU:
         st.rerun()
 halaman = st.session_state["menu"]
 st.sidebar.divider()
-st.sidebar.selectbox(
-    "Tampilan", ["Otomatis", "Terang", "Gelap"], key="mode_tampilan",
-    format_func=lambda x: {"Otomatis": "🖥️ Otomatis (ikut perangkat)", "Terang": "☀️ Terang", "Gelap": "🌙 Gelap"}[x],
-)
-st.sidebar.caption("Terima kasih, petani Indonesia 🇮🇩")
+st.sidebar.selectbox("Tampilan", ["Terang", "Gelap", "Otomatis"], key="mode_tampilan",
+                     format_func=lambda x: {"Terang": "Terang", "Gelap": "Gelap", "Otomatis": "Otomatis (ikut perangkat)"}[x])
+st.sidebar.markdown(f'<div class="profil"><div class="mark">{_mark if _ay else "P"}</div>'
+                    '<div>Pencatat keuangan<span>Akun pengelola</span></div></div>', unsafe_allow_html=True)
 
-hero(*HERO[halaman])
+# ---------- Header ----------
+_t = date.today()
+_k1, _k2, _k3 = st.columns([2.4, 2, 1.4], vertical_alignment="center")
+_k1.markdown(f'<div class="crumb">Dashboard / <b>{halaman}</b><span>{HARI[_t.weekday()]}, {_t.day:02d} '
+             f'{BULAN[_t.month - 1]} {_t.year}</span></div>', unsafe_allow_html=True)
+_k2.text_input("Cari", key="cari", placeholder="Cari di halaman ini...", label_visibility="collapsed")
+with _k3.popover("+ Catat Transaksi", type="primary", width="stretch"):
+    for _n in ["Biaya", "Penjualan", "Pembayaran"]:
+        if st.button(_n, key="cta_" + _n, width="stretch"):
+            st.session_state["menu"] = _n
+            st.rerun()
+st.markdown(f'<div class="judul">{halaman}</div><div class="sub">{HALAMAN[halaman]}</div>', unsafe_allow_html=True)
 
 # ---------- Laporan ----------
 if halaman == "Laporan":
     with st.spinner("Menghitung laporan..."):
-        data = (db.table("laporan_musim_tanam").select("*")
-                .order("tanggal_tanam", desc=True).execute().data)
+        data = (db.table("laporan_musim_tanam").select("*").order("tanggal_tanam", desc=True).execute().data)
     if not data:
         kosong("Belum ada data laporan", "Mulai dari menu Musim Tanam, lalu catat biaya dan hasil panen.")
         st.stop()
     df = pd.DataFrame(data)
     for k in ["total_biaya", "total_penjualan", "total_diterima", "sisa_piutang", "laba_rugi"]:
         df[k] = pd.to_numeric(df[k])
-    laba = df["laba_rugi"].sum()
-    fokus("Laba bersih" if laba >= 0 else "Rugi bersih", rp(laba),
-          [("Pendapatan", rp(df["total_penjualan"].sum())), ("Biaya", rp(df["total_biaya"].sum())),
-           ("Sisa piutang", rp(df["sisa_piutang"].sum()))], "" if laba >= 0 else "rugi")
-    kiri, kanan = st.columns([1, 1.3], gap="large")
-    with kiri:
-        st.subheader("Aktivitas musim tanam")
-        st.markdown('<ul class="lini">' + "".join(
-            f'<li><b>{IKON.get(r.tanaman, "🌱")} {sel(r.tanaman)}</b>'
-            f'<small>{tgl_id(r.tanggal_tanam)} · {"Selesai" if r.status == "selesai" else "Berjalan"}</small></li>'
-            for r in df.itertuples()) + "</ul>", unsafe_allow_html=True)
-    with kanan:
-        st.subheader("Biaya dan penjualan")
+    pend, biaya, laba, piutang = (df["total_penjualan"].sum(), df["total_biaya"].sum(),
+                                  df["laba_rugi"].sum(), df["sisa_piutang"].sum())
+    margin = laba / pend * 100 if pend else 0
+    stats([("Total Pendapatan", rp(pend)), ("Total Biaya Operasional", rp(biaya)),
+           ("Laba Bersih" if laba >= 0 else "Rugi Bersih", rp(laba), f"Margin {margin:.0f}%", "hl"),
+           ("Sisa Piutang", rp(piutang), "Semua sudah lunas" if piutang == 0 else "Belum diterima",
+            "ok" if piutang == 0 else "")])
+    k1, k2 = st.columns([6, 4], gap="medium")
+    with k1, st.container(border=True):
+        st.subheader("Pendapatan dan biaya per musim tanam")
         st.altair_chart(grafik(df), width="stretch")
-    st.subheader("Rincian per musim tanam")
-    for i, r in df.iterrows():
-        status = "✅ selesai" if r["status"] == "selesai" else "🌿 berjalan"
-        with st.expander(f'{IKON.get(r["tanaman"], "🌱")} {r["tanaman"]} ({tgl_id(r["tanggal_tanam"])}) · {status}',
-                         expanded=(i == 0)):
-            ok = r["laba_rugi"] >= 0
-            st.markdown(pendukung([("Biaya", rp(r["total_biaya"])), ("Penjualan", rp(r["total_penjualan"])),
-                                   ("Sisa piutang", rp(r["sisa_piutang"])),
-                                   ("Laba" if ok else "Rugi", rp(r["laba_rugi"]))]), unsafe_allow_html=True)
+    with k2, st.container(border=True):
+        st.subheader("Pendapatan per komoditas")
+        st.altair_chart(donat(df), width="stretch")
+    st.subheader("Rincian finansial per musim tanam")
+    tabel([{"tanaman": r.tanaman, "tgl": tgl_id(r.tanggal_tanam), "biaya": rp(r.total_biaya),
+            "jual": rp(r.total_penjualan), "piutang": rp(r.sisa_piutang), "laba": rp(r.laba_rugi),
+            "_laba": r.laba_rugi, "margin": f"{r.laba_rugi / r.total_penjualan * 100:.0f}%" if r.total_penjualan else "-",
+            "status": r.status} for r in df.itertuples()],
+          [("Komoditas", "tanaman", "l"), ("Tanggal tanam", "tgl", "l"), ("Total biaya", "biaya", "r"),
+           ("Total penjualan", "jual", "r"), ("Sisa piutang", "piutang", "r"), ("Laba bersih", "laba", "r"),
+           ("Margin", "margin", "r"), ("Status", "status", "c")])
 
 # ---------- Musim Tanam ----------
 elif halaman == "Musim Tanam":
-    kiri, kanan = st.columns([1.15, 1], gap="large")
-    with kiri:
+    n_jalan = sum(1 for m in musim if m["status"] == "berjalan")
+    stats([("Total Musim", str(len(musim))),
+           ("Sedang Berjalan", ('<i class="dot"></i>' if n_jalan else "") + str(n_jalan)),
+           ("Sudah Panen", str(len(musim) - n_jalan)),
+           ("Total Luas Lahan", f'{sum(m["luas_ha"] or 0 for m in musim):g} Ha')])
+    kiri, kanan = st.columns([35, 65], gap="medium")
+    with kiri, st.container(border=True):
         st.subheader("Tambah musim tanam")
-        with st.form("form_musim", clear_on_submit=True):
-            tanaman = st.selectbox("Tanaman", list(IKON))
+        with st.form("form_musim", clear_on_submit=True, border=False):
+            tanaman = st.selectbox("Komoditas", KOMODITAS)
             tgl = st.date_input("Tanggal tanam", value=date.today())
             luas = st.number_input("Luas lahan (hektar)", min_value=0.0, step=0.1)
             catatan = st.text_input("Catatan (opsional)")
-            if st.form_submit_button("Simpan musim tanam", type="primary"):
+            if st.form_submit_button("Simpan musim tanam", type="primary", width="stretch"):
                 simpan("musim_tanam", {"tanaman": tanaman, "tanggal_tanam": str(tgl),
                                        "luas_ha": luas or None, "catatan": catatan or None})
-    with kanan:
-        n_jalan = sum(1 for m in musim if m["status"] == "berjalan")
-        total_luas = sum(m["luas_ha"] or 0 for m in musim)
-        per = {}
-        for m in musim:
-            d = per.setdefault(m["tanaman"], [0, 0.0])
-            d[0] += 1
-            d[1] += m["luas_ha"] or 0
-        komoditas = "".join(f'<tr><td>{sel(k)}</td><td class="r">{v[0]}</td><td class="r">{v[1]:g} ha</td></tr>'
-                            for k, v in per.items())
-        st.markdown(
-            '<div class="buku"><div class="kepala">Ringkasan musim tanam</div><table class="rk">'
-            f'<tr><td>Total musim tanam</td><td class="r">{len(musim)}</td></tr>'
-            f'<tr><td>Sedang berjalan</td><td class="r">{n_jalan}</td></tr>'
-            f'<tr><td>Sudah selesai</td><td class="r">{len(musim) - n_jalan}</td></tr>'
-            f'<tr><td>Total luas dicatat</td><td class="r">{total_luas:g} ha</td></tr></table>'
-            '<div class="kepala">Per komoditas</div><table class="rk">'
-            '<tr class="th"><td>Komoditas</td><td class="r">Musim</td><td class="r">Luas</td></tr>'
-            f'{komoditas}</table></div>',
-            unsafe_allow_html=True)
-    st.subheader("Daftar musim tanam")
-    tabel([{**m, "tanaman": f'{IKON.get(m["tanaman"], "🌱")} {m["tanaman"]}',
-            "tanggal_tanam": tgl_id(m["tanggal_tanam"]),
-            "luas_ha": f'{m["luas_ha"]:g} ha' if m["luas_ha"] else "-"} for m in musim],
-          [("Tanaman", "tanaman", "l"), ("Tanggal tanam", "tanggal_tanam", "l"), ("Luas", "luas_ha", "r"),
-           ("Status", "status", "c"), ("Catatan", "catatan", "l")])
-    berjalan = {m["id"]: nama_musim[m["id"]] for m in musim if m["status"] == "berjalan"}
-    if berjalan:
-        st.subheader("Tandai panen selesai")
-        pilih = st.selectbox("Musim tanam", list(berjalan), format_func=berjalan.get)
-        if st.button("Tandai selesai"):
+
+    def aksi_selesai(b):
+        if b["status"] == "berjalan" and st.button("Selesai", key=f"sel_{b['id']}", width="stretch"):
             db.table("musim_tanam").update(
-                {"status": "selesai", "tanggal_panen": str(date.today())}).eq("id", pilih).execute()
-            st.session_state["pesan"] = "Selamat panen! 🌾"
+                {"status": "selesai", "tanggal_panen": str(date.today())}).eq("id", b["id"]).execute()
+            st.session_state["pesan"] = "Musim tanam ditandai selesai."
             st.rerun()
-    hapus_ui("musim_tanam", nama_musim, "Menghapus musim tanam juga menghapus biaya dan penjualannya.")
+
+    with kanan:
+        st.subheader("Daftar musim tanam")
+        daftar("musim", [{"id": m["id"], "tanaman": m["tanaman"], "tgl": tgl_id(m["tanggal_tanam"]),
+                          "luas": f'{m["luas_ha"]:g} Ha' if m["luas_ha"] else "-", "status": m["status"]}
+                         for m in musim],
+               [("Komoditas", "tanaman", "l", 1.3), ("Mulai", "tgl", "l", 1.5), ("Luas", "luas", "r", 0.9),
+                ("Status", "status", "c", 1.2)],
+               [(1.0, aksi_selesai),
+                (0.9, aksi_hapus("musim_tanam", "ms", "Hapus musim tanam ini? Biaya dan penjualannya ikut terhapus."))])
 
 # ---------- Biaya ----------
 elif halaman == "Biaya":
     if not musim:
         st.warning("Buat musim tanam dulu di menu Musim Tanam.")
         st.stop()
-    semua = ambil("biaya")
-    fokus("Total biaya", rp(sum(b["jumlah"] for b in semua)),
-          [("Jumlah catatan", str(len(semua))), ("Musim tanam", str(len(musim)))], "oranye")
-    st.subheader("Catat biaya")
-    with st.form("form_biaya", clear_on_submit=True):
-        mid = st.selectbox("Musim tanam", list(nama_musim), format_func=nama_musim.get)
-        tgl = st.date_input("Tanggal", value=date.today())
-        kat = st.selectbox("Kategori", ["bibit", "pupuk", "obat_tanaman", "upah", "listrik", "lainnya"])
-        ket = st.text_input("Keterangan (opsional)")
-        jml = st.number_input("Jumlah (Rp)", min_value=0, step=1000)
-        if st.form_submit_button("Simpan biaya", type="primary"):
-            simpan("biaya", {"musim_tanam_id": mid, "tanggal": str(tgl), "kategori": kat,
-                             "keterangan": ket or None, "jumlah": jml})
-    data = semua[:20]
-    st.subheader("Riwayat biaya")
-    if not data:
-        kosong()
-    else:
-        st.caption(f"Menampilkan {len(data)} data terbaru")
-        df = pd.DataFrame(data)
-        df["musim"] = df["musim_tanam_id"].map(nama_musim)
-        pilihan = {b["id"]: f'{b["tanggal"]} · {b["kategori"]} · {rp(b["jumlah"])}' for b in data}
-        df["jumlah"] = df["jumlah"].map(rp)
-        tabel(df.to_dict("records"), [("Tanggal", "tanggal", "l"), ("Musim tanam", "musim", "l"),
-              ("Kategori", "kategori", "l"), ("Keterangan", "keterangan", "l"), ("Jumlah", "jumlah", "r")])
-        hapus_ui("biaya", pilihan)
+    total = sum(b["jumlah"] for b in biaya_all)
+    per = {k: 0 for k in KATEGORI}
+    for b in biaya_all:
+        per[b["kategori"]] = per.get(b["kategori"], 0) + b["jumlah"]
+    besar = max(per, key=per.get) if total else None
+    a, b2 = st.columns([55, 45], gap="medium")
+    with a:
+        stats([("Total Biaya", rp(total)), ("Rata-rata Biaya / Musim", rp(total / len(musim))),
+               ("Total Transaksi", str(len(biaya_all))),
+               ("Alokasi Terbesar", f"{KATEGORI[besar][0]} · {per[besar] / total * 100:.0f}%" if besar else "-")])
+    with b2, st.container(border=True):
+        st.subheader("Biaya per kategori")
+        mx = max(per.values()) if total else 0
+        st.markdown("".join(
+            f'<div class="bar"><div class="a">{KATEGORI[k][0]}<span>{rp(v)}</span></div>'
+            f'<div class="t"><i style="width:{(v / mx * 100) if mx else 0:.0f}%"></i></div></div>'
+            for k, v in sorted(per.items(), key=lambda x: -x[1])), unsafe_allow_html=True)
+    kiri, kanan = st.columns([35, 65], gap="medium")
+    with kiri, st.container(border=True):
+        st.subheader("Catat biaya operasional")
+        with st.form("form_biaya", clear_on_submit=True, border=False):
+            mid = st.selectbox("Musim tanam", list(nama_musim), format_func=nama_musim.get)
+            tgl = st.date_input("Tanggal", value=date.today())
+            kat = st.selectbox("Kategori", list(KATEGORI), format_func=lambda x: KATEGORI[x][0])
+            ket = st.text_input("Keterangan (opsional)")
+            jml = st.number_input("Jumlah (Rp)", min_value=0, step=1000, format="%d")
+            if st.form_submit_button("Simpan biaya", type="primary", width="stretch"):
+                simpan("biaya", {"musim_tanam_id": mid, "tanggal": str(tgl), "kategori": kat,
+                                 "keterangan": ket or None, "jumlah": jml})
+    with kanan:
+        st.subheader("Riwayat biaya")
+        f1, f2 = st.columns(2)
+        fm = f1.selectbox("Musim tanam", ["Semua"] + list(nama_musim), key="f_bm",
+                          format_func=lambda x: x if x == "Semua" else nama_musim[x])
+        fk = f2.selectbox("Kategori", ["Semua"] + list(KATEGORI), key="f_bk",
+                          format_func=lambda x: x if x == "Semua" else KATEGORI[x][0])
+        rows = [{"id": b["id"], "tgl": b["tanggal"], "musim": nama_musim.get(b["musim_tanam_id"], "-"),
+                 "kategori": b["kategori"], "ket": b["keterangan"], "jumlah": rp(b["jumlah"])}
+                for b in biaya_all
+                if (fm == "Semua" or b["musim_tanam_id"] == fm) and (fk == "Semua" or b["kategori"] == fk)]
+        daftar("biaya", rows[:30],
+               [("Tanggal", "tgl", "l", 1.1), ("Musim", "musim", "l", 1.7), ("Kategori", "kategori", "l", 1.1),
+                ("Keterangan", "ket", "l", 1.3), ("Jumlah", "jumlah", "r", 1.3)],
+               [(0.8, aksi_hapus("biaya", "bi"))])
+        if len(rows) > 30:
+            st.caption(f"Menampilkan 30 dari {len(rows)} catatan terbaru.")
 
 # ---------- Penjualan ----------
 elif halaman == "Penjualan":
     if not musim:
         st.warning("Buat musim tanam dulu di menu Musim Tanam.")
         st.stop()
-    semua = ambil("penjualan")
-    per = lambda j: sum(p["total"] for p in semua if p["jenis_pembeli"] == j)
-    fokus("Total penjualan", rp(sum(p["total"] for p in semua)),
-          [("Ke tengkulak", rp(per("tengkulak"))), ("Ke mitra", rp(per("mitra"))),
-           ("Total hasil terjual", f'{sum(p["jumlah_kg"] for p in semua):g} kg')], "hijau")
-    st.subheader("Catat penjualan")
-    with st.form("form_jual", clear_on_submit=True):
-        mid = st.selectbox("Musim tanam", list(nama_musim), format_func=nama_musim.get)
-        tgl = st.date_input("Tanggal", value=date.today())
-        jenis = st.selectbox("Jenis pembeli", ["tengkulak", "mitra"])
-        nama = st.text_input("Nama pembeli (opsional)")
-        kg = st.number_input("Jumlah (kg)", min_value=0.0, step=10.0)
-        harga = st.number_input("Harga per kg (Rp)", min_value=0, step=100)
-        if st.form_submit_button("Simpan penjualan", type="primary"):
-            if kg <= 0:
-                st.error("Jumlah kg harus lebih dari 0.")
-            elif str(tgl) < next(m["tanggal_tanam"] for m in musim if m["id"] == mid):
-                st.error("Tanggal penjualan tidak boleh lebih awal dari tanggal tanam.")
-            else:
-                simpan("penjualan", {"musim_tanam_id": mid, "tanggal": str(tgl), "jenis_pembeli": jenis,
-                                     "nama_pembeli": nama or None, "jumlah_kg": kg, "harga_per_kg": harga})
-    data = semua[:20]
-    st.subheader("Riwayat penjualan")
-    if not data:
-        kosong()
-    else:
-        st.caption(f"Menampilkan {len(data)} data terbaru")
-        df = pd.DataFrame(data)
-        df["musim"] = df["musim_tanam_id"].map(nama_musim)
-        pilihan = {p["id"]: f'{p["tanggal"]} · {p["nama_pembeli"] or p["jenis_pembeli"]} · {rp(p["total"])}'
-                   for p in data}
-        df["total"] = df["total"].map(rp)
-        df = df.assign(jumlah_kg=df["jumlah_kg"].map(lambda x: f"{x:g} kg"),
-                       harga_per_kg=df["harga_per_kg"].map(rp))
-        tabel(df.to_dict("records"), [("Tanggal", "tanggal", "l"), ("Musim tanam", "musim", "l"),
-              ("Pembeli", "jenis_pembeli", "l"), ("Nama", "nama_pembeli", "l"),
-              ("Jumlah", "jumlah_kg", "r"), ("Harga/kg", "harga_per_kg", "r"), ("Total", "total", "r")])
-        hapus_ui("penjualan", pilihan, "Menghapus penjualan juga menghapus pembayarannya.")
+    tot = sum(p["total"] for p in jual_all)
+    per = {k: sum(p["total"] for p in jual_all if p["jenis_pembeli"] == k) for k in PEMBELI}
+    kg = sum(p["jumlah_kg"] for p in jual_all)
+    pc = lambda v: f"{v / tot * 100:.0f}% dari total" if tot else "0% dari total"
+    stats([("Total Penjualan", rp(tot), f"Eceran {rp(per['eceran'])}" if per["eceran"] else ""),
+           ("Saluran Tengkulak", rp(per["tengkulak"]), pc(per["tengkulak"])),
+           ("Saluran Mitra", rp(per["mitra"]), pc(per["mitra"])),
+           ("Volume Terjual", f"{kg:,.0f} kg".replace(",", "."), f"{kg / 1000:g} ton")])
+
+    def simpan_jual():
+        s = st.session_state
+        tgl_tanam = next(m["tanggal_tanam"] for m in musim if m["id"] == s["j_musim"])
+        if s["j_kg"] <= 0:
+            s["galat"] = "Jumlah kg harus lebih dari 0."
+            return
+        if str(s["j_tgl"]) < tgl_tanam:
+            s["galat"] = "Tanggal penjualan tidak boleh lebih awal dari tanggal tanam."
+            return
+        try:
+            db.table("penjualan").insert({
+                "musim_tanam_id": s["j_musim"], "tanggal": str(s["j_tgl"]), "jenis_pembeli": s["j_jenis"],
+                "nama_pembeli": s["j_nama"] or None, "jumlah_kg": s["j_kg"], "harga_per_kg": s["j_harga"]}).execute()
+        except Exception as e:
+            s["galat"] = f"Data belum tersimpan. ({e})"
+            return
+        s["pesan"] = "Penjualan tersimpan."
+        s["j_kg"], s["j_harga"], s["j_nama"] = 0.0, 0, ""
+
+    kiri, kanan = st.columns([35, 65], gap="medium")
+    with kiri, st.container(border=True):
+        st.subheader("Catat penjualan")
+        st.selectbox("Musim tanam", list(nama_musim), format_func=nama_musim.get, key="j_musim")
+        st.date_input("Tanggal", value=date.today(), key="j_tgl")
+        st.selectbox("Saluran penjualan", list(PEMBELI), format_func=lambda x: PEMBELI[x][0], key="j_jenis")
+        st.text_input("Nama pembeli (opsional)", key="j_nama")
+        st.number_input("Jumlah (kg)", min_value=0.0, step=10.0, key="j_kg")
+        st.number_input("Harga per kg (Rp)", min_value=0, step=100, format="%d", key="j_harga")
+        st.markdown(f'<div class="sub-total"><span>Subtotal</span><b>'
+                    f'{rp(st.session_state.get("j_kg", 0) * st.session_state.get("j_harga", 0))}</b></div>',
+                    unsafe_allow_html=True)
+        st.button("Simpan penjualan", type="primary", width="stretch", on_click=simpan_jual)
+    with kanan:
+        st.subheader("Riwayat penjualan")
+        rows = [{"id": p["id"], "tgl": (p["tanggal"], nama_musim.get(p["musim_tanam_id"], "-")),
+                 "saluran": p["jenis_pembeli"], "nama": p["nama_pembeli"], "kg": f'{p["jumlah_kg"]:g} kg',
+                 "harga": rp(p["harga_per_kg"]), "total": rp(p["total"])} for p in jual_all]
+        daftar("jual", rows[:30],
+               [("Tanggal", "tgl", "l", 1.8), ("Saluran", "saluran", "l", 1.1), ("Pembeli", "nama", "l", 1.1),
+                ("Jumlah", "kg", "r", 1.0), ("Harga/kg", "harga", "r", 1.1), ("Subtotal", "total", "r", 1.3)],
+               [(0.8, aksi_hapus("penjualan", "pj", "Hapus penjualan ini? Pembayarannya ikut terhapus."))])
+        if len(rows) > 30:
+            st.caption(f"Menampilkan 30 dari {len(rows)} penjualan terbaru.")
 
 # ---------- Pembayaran ----------
 elif halaman == "Pembayaran":
-    jual = ambil("penjualan")
-    if not jual:
+    if not jual_all:
         st.warning("Catat penjualan dulu di menu Penjualan.")
         st.stop()
-    bayar = ambil("pembayaran")
     dibayar = {}
-    for y in bayar:
+    for y in bayar_all:
         dibayar[y["penjualan_id"]] = dibayar.get(y["penjualan_id"], 0) + y["jumlah"]
-    total_jual = sum(p["total"] for p in jual)
-    diterima = sum(dibayar.values())
-    fokus("Pembayaran diterima", rp(diterima),
-          [("Total penjualan", rp(total_jual)), ("Sisa piutang", rp(total_jual - diterima))], "hijau")
-    label = {p["id"]: f'{p["tanggal"]} · {nama_musim.get(p["musim_tanam_id"])} · '
-                      f'{p["nama_pembeli"] or p["jenis_pembeli"]} · {rp(p["total"])}' for p in jual}
-    st.subheader("Status tiap penjualan")
-    tabel([{"tanggal": p["tanggal"], "pembeli": p["nama_pembeli"] or p["jenis_pembeli"], "total": rp(p["total"]),
-            "dibayar": rp(dibayar.get(p["id"], 0)),
-            "status": "lunas" if dibayar.get(p["id"], 0) >= p["total"]
-            else ("sebagian" if dibayar.get(p["id"], 0) > 0 else "belum")} for p in jual[:20]],
-          [("Tanggal", "tanggal", "l"), ("Pembeli", "pembeli", "l"), ("Total", "total", "r"),
-           ("Sudah dibayar", "dibayar", "r"), ("Status", "status", "c")])
-    st.subheader("Catat pembayaran")
-    with st.form("form_bayar", clear_on_submit=True):
-        pid = st.selectbox("Penjualan", list(label), format_func=label.get)
+    total_jual, diterima = sum(p["total"] for p in jual_all), sum(dibayar.values())
+    stats([("Total Kas Diterima", rp(diterima), "", "ok"), ("Total Nilai Penjualan", rp(total_jual)),
+           ("Sisa Piutang", rp(total_jual - diterima), "Semua sudah lunas" if total_jual - diterima <= 0 else "Belum diterima",
+            "ok" if total_jual - diterima <= 0 else "")])
+    label = {p["id"]: f'{tgl_id(p["tanggal"])} · {p["nama_pembeli"] or PEMBELI[p["jenis_pembeli"]][0]} · {rp(p["total"])}'
+             for p in jual_all}
+
+    @st.dialog("Catat Pembayaran")
+    def dialog_bayar(p):
+        sisa = p["total"] - dibayar.get(p["id"], 0)
+        st.markdown(f'**{label[p["id"]]}**  \nSisa tagihan: **{rp(sisa)}**')
         tgl = st.date_input("Tanggal diterima", value=date.today())
-        jml = st.number_input("Jumlah diterima (Rp)", min_value=0, step=1000)
+        jml = st.number_input("Jumlah diterima (Rp)", min_value=0, value=max(int(sisa), 0), step=1000, format="%d")
         ket = st.text_input("Keterangan (opsional)")
-        if st.form_submit_button("Simpan pembayaran", type="primary"):
+        if st.button("Simpan pembayaran", type="primary", width="stretch"):
             if jml <= 0:
                 st.error("Jumlah harus lebih dari 0.")
-            elif str(tgl) < next(p["tanggal"] for p in jual if p["id"] == pid):
+            elif str(tgl) < p["tanggal"]:
                 st.error("Tanggal diterima tidak boleh lebih awal dari tanggal penjualan.")
             else:
-                simpan("pembayaran", {"penjualan_id": pid, "tanggal": str(tgl),
-                                      "jumlah": jml, "keterangan": ket or None})
-    data = bayar[:20]
-    st.subheader("Riwayat pembayaran")
-    if not data:
-        kosong()
-    else:
-        st.caption(f"Menampilkan {len(data)} data terbaru")
-        df = pd.DataFrame(data)
-        df["penjualan"] = df["penjualan_id"].map(label)
-        pilihan = {y["id"]: f'{y["tanggal"]} · {rp(y["jumlah"])}' for y in data}
-        df["jumlah"] = df["jumlah"].map(rp)
-        tabel(df.to_dict("records"), [("Tanggal", "tanggal", "l"), ("Penjualan", "penjualan", "l"),
-              ("Jumlah", "jumlah", "r"), ("Keterangan", "keterangan", "l")])
-        hapus_ui("pembayaran", pilihan)
+                simpan("pembayaran", {"penjualan_id": p["id"], "tanggal": str(tgl), "jumlah": jml,
+                                      "keterangan": ket or None})
+
+    def aksi_bayar(b):
+        if st.button("Catat Pembayaran", key=f"cb_{b['id']}", width="stretch"):
+            dialog_bayar(next(p for p in jual_all if p["id"] == b["id"]))
+
+    def status(p):
+        d = dibayar.get(p["id"], 0)
+        return "lunas" if d >= p["total"] else ("sebagian" if d > 0 else "belum")
+
+    st.subheader("Tagihan penjualan")
+    daftar("tagihan", [{"id": p["id"], "tgl": (tgl_id(p["tanggal"]), nama_musim.get(p["musim_tanam_id"], "-")),
+                        "saluran": p["jenis_pembeli"], "total": rp(p["total"]), "dibayar": rp(dibayar.get(p["id"], 0)),
+                        "sisa": rp(max(p["total"] - dibayar.get(p["id"], 0), 0)), "status": status(p)}
+                       for p in jual_all][:30],
+           [("Penjualan", "tgl", "l", 1.8), ("Saluran", "saluran", "l", 1.0), ("Total", "total", "r", 1.2),
+            ("Dibayar", "dibayar", "r", 1.2), ("Sisa", "sisa", "r", 1.2), ("Status", "status", "c", 1.1)],
+           [(1.4, aksi_bayar)])
+    st.subheader("Riwayat kas diterima")
+    daftar("kas", [{"id": y["id"], "tgl": tgl_id(y["tanggal"]), "jual": label.get(y["penjualan_id"], "-"),
+                    "jumlah": rp(y["jumlah"]), "ket": y["keterangan"]} for y in bayar_all][:30],
+           [("Tanggal", "tgl", "l", 1.3), ("Penjualan", "jual", "l", 3.0), ("Jumlah", "jumlah", "r", 1.2),
+            ("Keterangan", "ket", "l", 1.3)],
+           [(0.8, aksi_hapus("pembayaran", "by"))])
