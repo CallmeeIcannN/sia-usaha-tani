@@ -30,78 +30,70 @@ IKON = {"Kentang": "🥔", "Cabai": "🌶️", "Kobis": "🥬", "Jagung": "🌽"
 
 st.markdown("""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
-:root{--foto:linear-gradient(#2A5A34,#2A5A34)}
-.stApp,input,textarea,button,select{font-family:'Plus Jakarta Sans',system-ui,sans-serif}
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
+:root{--foto:linear-gradient(#2A5A34,#2A5A34);--e1:0 1px 2px rgba(0,0,0,.14),0 1px 3px 1px rgba(0,0,0,.08)}
+.stApp *:not([data-testid="stIconMaterial"]):not(svg):not(path){font-family:'Roboto','Segoe UI',system-ui,sans-serif}
 .stApp{background:var(--bg)}
 [data-testid="stHeader"]{background:transparent}
-.block-container{max-width:1100px;padding-top:1.6rem;padding-bottom:4rem;animation:naik .45s ease both}
-@keyframes naik{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
-.stApp h3{font-weight:800;font-size:1.25rem;margin-top:1.8rem}
-.hero2{position:relative;overflow:hidden;display:flex;align-items:center;min-height:220px;padding:30px 40px;margin-bottom:28px;
- border-radius:26px 26px 100px 26px;color:#F5F0E1;
- background:linear-gradient(100deg,rgba(24,62,34,.96) 0 44%,rgba(24,62,34,.55) 100%),var(--foto);background-size:cover;background-position:center bottom}
-.hero2::after{content:"";position:absolute;right:-50px;bottom:-70px;width:220px;height:220px;background:var(--aksen,#F2C14E);border-radius:58% 42% 51% 49%/46% 55% 45% 54%;opacity:.9}
-.hero2::before{content:"";position:absolute;right:-140px;bottom:-190px;width:480px;height:480px;border-radius:50%;background:repeating-radial-gradient(circle,transparent 0 30px,rgba(245,240,225,.11) 30px 32px)}
-.hero2 .isi{position:relative;z-index:2;max-width:640px}
-.hero2 .tag{display:inline-block;font-weight:700;font-size:.85rem;background:rgba(245,240,225,.16);padding:4px 12px;border-radius:999px}
-.hero2 .judul{text-wrap:balance;margin:14px 0 8px;font-size:2.15rem;font-weight:800;line-height:1.12;letter-spacing:-.02em;color:#F5F0E1}
-.hero2 .desk{font-size:1rem;color:#E6EFD2;max-width:46ch}
-.hero2 .kutip{margin-top:16px;padding-left:12px;border-left:3px solid var(--aksen,#F2C14E);font-size:.85rem;font-style:italic;color:#CFE0AE;max-width:56ch}
-.hero2 .tunas{position:absolute;right:46px;bottom:24px;width:78px;z-index:2}
-.hero2.kuning{--aksen:#F2C14E}.hero2.hijau{--aksen:#8DBF4A}.hero2.oranye{--aksen:#E08A3C}.hero2.sage{--aksen:#9CCB9A}
-.fokus{margin:4px 0 10px;animation:naik .6s ease both}
-.fokus .lbl{font-weight:600;color:var(--muted);font-size:.95rem}
-.fokus .angka{display:inline;font-size:3.4rem;font-weight:800;letter-spacing:-.03em;line-height:1.2;color:var(--teks);
- background:linear-gradient(transparent 64%,var(--hl,rgba(242,193,78,.6)) 64%)}
-.fokus.rugi .angka{color:var(--bad)}.fokus.oranye{--hl:rgba(224,138,60,.5)}.fokus.hijau{--hl:rgba(141,191,74,.5)}
-.pendukung{display:flex;gap:34px;flex-wrap:wrap;margin-top:16px;padding-top:14px;border-top:1px solid var(--garis)}
-.pendukung span{display:block;font-size:.8rem;color:var(--muted)}.pendukung b{font-size:1.1rem;font-weight:700;color:var(--teks)}
+.block-container{max-width:1100px;padding-top:1.6rem;padding-bottom:4rem;animation:naik .4s ease both}
+@keyframes naik{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.stApp h3{font-weight:500;font-size:1.35rem;margin-top:2rem}
+.appbar{display:flex;overflow:hidden;min-height:190px;margin-bottom:28px;border-radius:28px;background:var(--pri-c);color:var(--on-pri-c);box-shadow:var(--e1)}
+.appbar .isi{flex:1 1 auto;padding:28px 32px;display:flex;flex-direction:column;justify-content:center}
+.appbar .tag{align-self:flex-start;font-size:.8rem;font-weight:500;padding:4px 12px;border-radius:8px;background:var(--ter-c);color:var(--on-ter-c)}
+.appbar .judul{margin:12px 0 6px;font-size:2rem;font-weight:500;line-height:1.2;text-wrap:balance}
+.appbar .desk{font-size:1rem;opacity:.85;max-width:50ch}
+.appbar .kutip{margin-top:12px;font-size:.85rem;font-style:italic;opacity:.7;max-width:56ch}
+.appbar .foto{flex:0 0 34%;background:var(--foto);background-size:cover;background-position:center bottom;border-radius:45% 0 0 45%/50% 0 0 50%}
+.metrikwrap,.tiles{display:flex;flex-wrap:wrap;gap:12px}.metrikwrap{margin:4px 0 8px}
+.metrik{flex:1.7 1 300px;background:var(--pri-c);color:var(--on-pri-c);border-radius:28px;padding:24px 28px;box-shadow:var(--e1)}
+.metrik.rugi{background:var(--err-c);color:var(--on-err-c)}.metrik.oranye{background:var(--ter-c);color:var(--on-ter-c)}
+.metrik .lbl{font-size:.9rem;font-weight:500;opacity:.8}
+.metrik .angka{font-size:3rem;font-weight:700;letter-spacing:-.02em;line-height:1.15;margin-top:4px}
+.tile{flex:1 1 150px;background:var(--card);border-radius:20px;padding:18px 20px;box-shadow:var(--e1)}
+.tile span{display:block;font-size:.8rem;color:var(--muted)}
+.tile b{display:block;margin-top:4px;font-size:1.2rem;font-weight:700;color:var(--teks)}
 .lini{list-style:none;margin:0 0 0 6px;padding:0 0 0 14px;border-left:2px solid var(--garis)}
 .lini li{position:relative;padding:0 0 18px 16px;color:var(--teks)}
-.lini li::before{content:"";position:absolute;left:-23px;top:5px;width:12px;height:12px;border-radius:50%;background:#5E9B3A;border:2px solid var(--bg)}
+.lini li::before{content:"";position:absolute;left:-23px;top:5px;width:12px;height:12px;border-radius:50%;background:var(--pri);border:2px solid var(--bg)}
 .lini small{display:block;color:var(--muted);margin-top:2px}
-.panel{position:relative;overflow:hidden;border-radius:22px 22px 22px 80px;padding:26px 28px 90px;background:#1F4D2B;color:#F5F0E1;margin-top:1.1rem}
-.panel small{color:#CFE0AE}.panel .besar{font-size:2.9rem;font-weight:800;line-height:1.1}
-.panel .baris{display:flex;justify-content:space-between;padding:9px 0;border-top:1px solid rgba(245,240,225,.18)}
-.panel .tunas{position:absolute;right:22px;bottom:12px;width:84px;opacity:.95}
-.tabelbox{background:var(--card);border:1px solid var(--garis);border-radius:16px;overflow-x:auto}
+.panel{position:relative;overflow:hidden;border-radius:28px 28px 28px 80px;padding:24px 28px 88px;background:var(--sek-c);color:var(--on-sek-c);margin-top:1.1rem;box-shadow:var(--e1)}
+.panel small{opacity:.75}.panel .besar{font-size:2.8rem;font-weight:700;line-height:1.1}
+.panel .baris{display:flex;justify-content:space-between;padding:9px 0;border-top:1px solid var(--garis)}
+.panel .tunas{position:absolute;right:22px;bottom:12px;width:80px}
+.tabelbox{background:var(--card);border-radius:16px;overflow-x:auto;box-shadow:var(--e1)}
 .tabel{width:100%;border-collapse:collapse;font-size:.92rem;color:var(--teks)}
-.tabel th{background:var(--head);font-weight:700;font-size:.8rem;color:var(--muted);padding:11px 16px;text-align:left;white-space:nowrap}
+.tabel th{background:var(--head);font-weight:500;font-size:.8rem;color:var(--muted);padding:12px 16px;text-align:left;white-space:nowrap}
 .tabel td{padding:12px 16px;border-top:1px solid var(--garis)}
 .tabel .r{text-align:right;font-variant-numeric:tabular-nums}.tabel .c{text-align:center}
 .tabel tbody tr{transition:background .15s}.tabel tbody tr:hover{background:var(--hover)}
-.badge{display:inline-block;padding:2px 10px;border-radius:999px;font-size:.78rem;font-weight:600;white-space:nowrap}
-.badge.ok{background:rgba(62,142,65,.18);color:var(--ok)}.badge.jalan{background:rgba(217,154,27,.2);color:var(--warn)}
-.badge.belum{background:rgba(192,57,43,.16);color:var(--bad)}
+.badge{display:inline-block;padding:3px 10px;border-radius:8px;font-size:.78rem;font-weight:500;white-space:nowrap}
+.badge.ok{background:rgba(62,142,65,.2);color:var(--ok)}.badge.jalan{background:rgba(217,154,27,.22);color:var(--warn)}
+.badge.belum{background:rgba(186,26,26,.14);color:var(--bad)}
 .kosong{background:var(--card);border:1px dashed var(--garis);border-radius:16px;padding:28px 16px;text-align:center;color:var(--teks)}
 .kosong .ik{font-size:1.8rem}.kosong b{display:block;margin-top:6px}
 .kosong span{display:block;margin-top:4px;font-size:.88rem;color:var(--muted)}
-[data-testid="stForm"]{background:var(--card);border:1px solid var(--garis);border-radius:18px;padding:20px}
-[data-testid="stExpander"] details{background:var(--card);border:1px solid var(--garis)!important;border-radius:14px}
-[data-baseweb="input"],[data-baseweb="base-input"],[data-baseweb="select"]>div{border-radius:10px!important}
-[data-baseweb="input"]:focus-within{border-color:#5E9B3A!important;box-shadow:0 0 0 3px rgba(94,155,58,.25)!important}
+[data-testid="stForm"]{background:var(--card);border:0;border-radius:24px;padding:22px;box-shadow:var(--e1)}
+[data-testid="stExpander"] details{background:var(--card);border:0!important;border-radius:16px;box-shadow:var(--e1)}
+[data-baseweb="input"],[data-baseweb="base-input"],[data-baseweb="select"]>div{border-radius:8px!important}
+[data-baseweb="input"]:focus-within{border-color:var(--pri)!important;box-shadow:0 0 0 1px var(--pri)!important}
 [data-testid="stNumberInputStepUp"],[data-testid="stNumberInputStepDown"]{background:transparent!important}
-[data-testid="stNumberInputStepUp"]:hover,[data-testid="stNumberInputStepDown"]:hover{background:rgba(94,155,58,.18)!important}
-div.stButton>button,div.stFormSubmitButton>button{min-height:42px;border-radius:12px;font-weight:600;transition:background .15s,transform .15s}
-[data-testid^="stBaseButton-primary"]{background:#2F6B3A!important;color:#fff!important;border:0!important}
-[data-testid^="stBaseButton-primary"]:hover{background:#265A30!important;transform:translateY(-1px)}
-[data-testid^="stBaseButton-secondary"]{background:rgba(94,155,58,.14)!important;border:1px solid rgba(94,155,58,.45)!important}
-[class*="st-key-b_"] button{background:#B83A2E!important;color:#fff!important;border:0!important}
-[class*="st-key-b_"] button:disabled{opacity:.45}
-[data-testid="stSidebar"]{background:#1F4D2B!important;border-radius:0 28px 28px 0}
-[data-testid="stSidebar"] p,[data-testid="stSidebar"] label,[data-testid="stSidebar"] small{color:#E4EDCF!important}
-.logo{padding:6px 6px 18px}.logo .ik{font-size:1.9rem}.logo b{display:block;font-size:1.25rem;font-weight:800;color:#F5F0E1}
-.logo span{font-size:.8rem;color:#B9D18D}
-[data-testid="stSidebar"] .stButton>button{justify-content:flex-start;padding:10px 14px;background:transparent!important;border:0!important;color:#DDEBC3!important}
-[data-testid="stSidebar"] .stButton>button:hover{background:rgba(255,255,255,.09)!important;transform:translateX(4px)}
-[data-testid="stSidebar"] [data-testid="stBaseButton-primary"]{background:#F2C14E!important;color:#1F4D2B!important;font-weight:800}
-[data-testid="stSidebar"] [data-baseweb="select"]>div{background:#F5F0E1!important}
-[data-testid="stSidebar"] [data-baseweb="select"] *{color:#1E2A19!important}
-@media (max-width:640px){.hero2{padding:24px 22px 70px;min-height:0;border-radius:22px 22px 64px 22px}.hero2 .judul{font-size:1.65rem}
- .hero2 .tunas{width:58px;right:20px;bottom:14px}.hero2::after{width:150px;height:150px;right:-40px;bottom:-50px}.hero2::before{display:none}.fokus .angka{font-size:2.3rem}.pendukung{gap:20px}
- .tabel th,.tabel td{padding:10px 12px}}
-@media (prefers-reduced-motion:reduce){.block-container,.fokus{animation:none}div.stButton>button,div.stFormSubmitButton>button,.tabel tbody tr{transition:none}}
+[data-testid="stNumberInputStepUp"]:hover,[data-testid="stNumberInputStepDown"]:hover{background:var(--hover)!important}
+div.stButton>button,div.stFormSubmitButton>button{min-height:40px;padding:0 24px;border-radius:20px;font-weight:500;transition:box-shadow .15s,filter .15s}
+div.stButton>button:hover,div.stFormSubmitButton>button:hover{box-shadow:var(--e1);filter:brightness(1.06)}
+[data-testid^="stBaseButton-primary"]{background:var(--pri)!important;color:var(--on-pri)!important;border:0!important}
+[data-testid^="stBaseButton-secondary"]{background:var(--sek-c)!important;color:var(--on-sek-c)!important;border:0!important}
+[class*="st-key-b_"] button{background:var(--bad)!important;color:var(--bg)!important;border:0!important}
+[class*="st-key-b_"] button:disabled{opacity:.4}
+[data-testid="stSidebar"]{background:var(--card)!important;border-radius:0 28px 28px 0}
+.logo{padding:8px 8px 18px}.logo b{display:block;font-size:1.3rem;font-weight:500;color:var(--teks)}
+.logo span{font-size:.8rem;color:var(--muted)}
+[data-testid="stSidebar"] .stButton>button{justify-content:flex-start;gap:10px;min-height:48px;border-radius:28px;background:transparent!important;color:var(--teks)!important}
+[data-testid="stSidebar"] .stButton>button:hover{background:var(--hover)!important;box-shadow:none;filter:none}
+[data-testid="stSidebar"] [data-testid="stBaseButton-primary"]{background:var(--sek-c)!important;color:var(--on-sek-c)!important;font-weight:700}
+@media (max-width:640px){.appbar{flex-direction:column-reverse;min-height:0}.appbar .foto{flex:0 0 110px;border-radius:0 0 45% 45%/0 0 60% 60%}
+ .appbar .isi{padding:22px}.appbar .judul{font-size:1.6rem}.metrik .angka{font-size:2.2rem}.tabel th,.tabel td{padding:10px 12px}}
+@media (prefers-reduced-motion:reduce){.block-container{animation:none}div.stButton>button,div.stFormSubmitButton>button,.tabel tbody tr{transition:none}}
 </style>
 """, unsafe_allow_html=True)
 
@@ -119,19 +111,20 @@ def foto_latar():
     return None
 
 
-LIGHT = ("--bg:#F5F0E1;--card:rgba(255,255,255,.72);--garis:rgba(31,77,43,.14);--muted:#5E6B55;--head:rgba(31,77,43,.07);"
-         "--hover:rgba(94,155,58,.10);--teks:#1E2A19;--ok:#2E7D32;--warn:#8A5A00;--bad:#B03A2E")
-DARK = ("--bg:#0E170F;--card:rgba(255,255,255,.06);--garis:rgba(255,255,255,.14);--muted:#A9BC9B;--head:rgba(255,255,255,.07);"
-        "--hover:rgba(141,191,74,.12);--teks:#ECF2E0;--ok:#8FD18F;--warn:#F0C463;--bad:#F29A8F")
+LIGHT = ("--bg:#F6FBF1;--card:#EAF0E4;--garis:#C1C9BC;--muted:#414941;--head:#DDE5D6;--hover:rgba(45,106,62,.08);"
+         "--teks:#181D17;--ok:#1B5E20;--warn:#6B4F00;--bad:#BA1A1A;--pri:#2D6A3E;--on-pri:#FFFFFF;--pri-c:#BDEDC3;"
+         "--on-pri-c:#00210D;--sek-c:#D6E8D2;--on-sek-c:#111F13;--ter-c:#FFDF9B;--on-ter-c:#251A00;--err-c:#FFDAD6;--on-err-c:#410002")
+DARK = ("--bg:#101512;--card:#1A211C;--garis:#414941;--muted:#C1C9BC;--head:#232B25;--hover:rgba(160,214,167,.10);"
+        "--teks:#E0E4DA;--ok:#8FD99A;--warn:#F0C463;--bad:#FFB4AB;--pri:#8FD99A;--on-pri:#00391A;--pri-c:#1B5030;"
+        "--on-pri-c:#B8F0BF;--sek-c:#3A4B3C;--on-sek-c:#D6E8D2;--ter-c:#5A4300;--on-ter-c:#FFDF9B;--err-c:#93000A;--on-err-c:#FFDAD6")
 TEMA = {
-    "Terang": dict(vars=LIGHT, bg="#F5F0E1", teks="#1E2A19", input="#FFFFFF", garis="#C9D8B4"),
-    "Gelap": dict(vars=DARK, bg="#0E170F", teks="#ECF2E0", input="#1F3023", garis="#35503A"),
+    "Terang": dict(vars=LIGHT, bg="#F6FBF1", teks="#181D17", input="#FFFFFF"),
+    "Gelap": dict(vars=DARK, bg="#101512", teks="#E0E4DA", input="#232B25"),
 }
 
 
 def css_tampilan(mode, foto):
-    css = ":root{--foto:linear-gradient(#2A5A34,#2A5A34)}" if not foto else (
-        f":root{{--foto:url(data:image/jpeg;base64,{foto})}}")
+    css = f":root{{--foto:url(data:image/jpeg;base64,{foto})}}" if foto else ""
     if mode not in TEMA:  # Otomatis: ikut pengaturan perangkat
         return css + f":root{{{LIGHT}}}@media (prefers-color-scheme:dark){{:root{{{DARK}}}}}"
     t = TEMA[mode]
@@ -140,13 +133,8 @@ def css_tampilan(mode, foto):
         f'.stApp h1,.stApp h2,.stApp h3,.stApp p,.stApp label,.stApp li,'
         f'.stApp [data-testid="stMarkdownContainer"],.stApp [data-testid="stCaptionContainer"]'
         f'{{color:{t["teks"]}!important}}'
-        f'.stApp [data-testid="stMain"] [data-baseweb="input"],.stApp [data-testid="stMain"] [data-baseweb="base-input"],'
-        f'.stApp [data-testid="stMain"] [data-baseweb="select"]>div,.stApp [data-testid="stMain"] textarea,'
-        f'.stApp [data-testid="stMain"] input{{background-color:{t["input"]}!important;color:{t["teks"]}!important}}'
-        f'[data-testid="stExpander"]{{border-color:{t["garis"]}!important}}'
-        '.stApp .hero2,.stApp .hero2 .judul,.stApp .hero2 .tag{color:#F5F0E1!important}.stApp .hero2 .desk{color:#E6EFD2!important}'
-        '.stApp .hero2 .kutip{color:#CFE0AE!important}.stApp .panel,.stApp .panel small{color:#F5F0E1!important}'
-        '[data-testid="stSidebar"] p,[data-testid="stSidebar"] label{color:#E4EDCF!important}'
+        f'.stApp [data-baseweb="input"],.stApp [data-baseweb="base-input"],.stApp [data-baseweb="select"]>div,'
+        f'.stApp textarea,.stApp input{{background-color:{t["input"]}!important;color:{t["teks"]}!important}}'
     )
 
 
@@ -155,15 +143,15 @@ st.markdown(f"<style>{_css}</style>", unsafe_allow_html=True)
 
 st.session_state.setdefault("kutipan", random.choice(KUTIPAN))
 
-TUNAS = ('<svg class="tunas" viewBox="0 0 120 140" aria-hidden="true"><path d="M60 138V58" stroke="#F5F0E1" '
+TUNAS = ('<svg class="tunas" viewBox="0 0 120 140" aria-hidden="true"><path d="M60 138V58" stroke="#2D6A3E" '
          'stroke-width="5" stroke-linecap="round" fill="none"/><path d="M60 80C60 52 38 38 14 40c0 28 20 44 46 40z" '
          'fill="#8DBF4A"/><path d="M60 64C60 38 80 22 106 24c0 26-20 42-46 40z" fill="#C5E27A"/></svg>')
 HERO = {
-    "Laporan": ("📊 Laporan", "Pantau kondisi keuangan usaha tani", "Biaya, penjualan, dan laba dalam satu tampilan.", "kuning"),
-    "Musim Tanam": ("🌱 Musim Tanam", "Kelola musim tanam di lahanmu", "Kelola data musim tanam dan aktivitas lahan.", "hijau"),
-    "Biaya": ("💰 Biaya", "Catat setiap pengeluaran", "Agar kondisi usaha tani tetap terkontrol.", "oranye"),
-    "Penjualan": ("🧺 Penjualan", "Hasil usaha tani", "Catat hasil panen yang terjual dan pantau pendapatan.", "kuning"),
-    "Pembayaran": ("💳 Pembayaran", "Arus pembayaran", "Pantau uang yang sudah diterima dan sisa piutang.", "sage"),
+    "Laporan": ("Laporan", "Pantau kondisi keuangan usaha tani", "Biaya, penjualan, dan laba dalam satu tampilan.", "kuning"),
+    "Musim Tanam": ("Musim Tanam", "Kelola musim tanam di lahanmu", "Kelola data musim tanam dan aktivitas lahan.", "hijau"),
+    "Biaya": ("Biaya", "Catat setiap pengeluaran", "Agar kondisi usaha tani tetap terkontrol.", "oranye"),
+    "Penjualan": ("Penjualan", "Hasil usaha tani", "Catat hasil panen yang terjual dan pantau pendapatan.", "kuning"),
+    "Pembayaran": ("Pembayaran", "Arus pembayaran", "Pantau uang yang sudah diterima dan sisa piutang.", "sage"),
 }
 STATUS = {"selesai": ("ok", "Selesai"), "berjalan": ("jalan", "Berjalan"), "lunas": ("ok", "Lunas"),
           "sebagian": ("jalan", "Sebagian"), "belum": ("belum", "Belum dibayar")}
@@ -179,22 +167,26 @@ def tgl_id(s):
         return str(s)
 
 
-def hero(tag, judul, desk="", aksen="kuning"):
+def hero(tag, judul, desk="", aksen=""):
     st.markdown(
-        f'<div class="hero2 {aksen}"><div class="isi"><span class="tag">{tag}</span>'
+        f'<div class="appbar"><div class="isi"><span class="tag">{tag}</span>'
         f'<div class="judul">{judul}</div><div class="desk">{desk}</div>'
-        f'<div class="kutip">“{st.session_state["kutipan"]}”</div></div>{TUNAS}</div>',
+        f'<div class="kutip">“{st.session_state["kutipan"]}”</div></div><div class="foto"></div></div>',
         unsafe_allow_html=True,
     )
 
 
+def tiles(items):
+    return "".join(f'<div class="tile"><span>{k}</span><b>{v}</b></div>' for k, v in items)
+
+
 def pendukung(items):
-    return '<div class="pendukung">' + "".join(f"<div><span>{k}</span><b>{v}</b></div>" for k, v in items) + "</div>"
+    return f'<div class="tiles">{tiles(items)}</div>'
 
 
 def fokus(label, nilai, items, kelas=""):
-    st.markdown(f'<div class="fokus {kelas}"><div class="lbl">{label}</div><div class="angka">{nilai}</div>'
-                f'{pendukung(items)}</div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="metrikwrap"><div class="metrik {kelas}"><div class="lbl">{label}</div>'
+                f'<div class="angka">{nilai}</div></div>{tiles(items)}</div>', unsafe_allow_html=True)
 
 
 def kosong(judul="Belum ada data transaksi",
@@ -307,18 +299,21 @@ with st.spinner("Memuat data..."):
 nama_musim = {m["id"]: f'{IKON.get(m["tanaman"], "🌱")} {m["tanaman"]} ({m["tanggal_tanam"]})' for m in musim}
 
 # ---------- Navigasi ----------
-MENU = ["📊 Laporan", "🌱 Musim Tanam", "💰 Biaya", "🧺 Penjualan", "💳 Pembayaran"]
-st.session_state.setdefault("menu", MENU[0])
+MENU = [("Laporan", ":material/monitoring:"), ("Musim Tanam", ":material/potted_plant:"),
+        ("Biaya", ":material/receipt_long:"), ("Penjualan", ":material/shopping_basket:"),
+        ("Pembayaran", ":material/account_balance_wallet:")]
+st.session_state.setdefault("menu", "Laporan")
+if st.session_state["menu"] not in dict(MENU):
+    st.session_state["menu"] = "Laporan"
 st.sidebar.markdown(
-    '<div class="logo"><div class="ik">🌱</div><b>SIA Usaha Tani</b>'
-    '<span>Pencatatan akuntansi usaha tani</span></div>', unsafe_allow_html=True)
-for m in MENU:
-    if st.sidebar.button(m, key="nav_" + m.split(" ", 1)[1].replace(" ", "_"), width="stretch",
-                         type="primary" if st.session_state["menu"] == m else "secondary"):
-        st.session_state["menu"] = m
+    '<div class="logo"><b>🌱 SIA Usaha Tani</b><span>Pencatatan akuntansi usaha tani</span></div>',
+    unsafe_allow_html=True)
+for nama, ikon in MENU:
+    if st.sidebar.button(nama, icon=ikon, key="nav_" + nama.replace(" ", "_"), width="stretch",
+                         type="primary" if st.session_state["menu"] == nama else "secondary"):
+        st.session_state["menu"] = nama
         st.rerun()
-menu = st.session_state["menu"]
-halaman = menu.split(" ", 1)[1]
+halaman = st.session_state["menu"]
 st.sidebar.divider()
 st.sidebar.selectbox(
     "Tampilan", ["Otomatis", "Terang", "Gelap"], key="mode_tampilan",
