@@ -9,7 +9,19 @@ import pandas as pd
 from datetime import date
 from supabase import create_client
 
-st.set_page_config(page_title="SIA Usaha Tani", page_icon="🌱", layout="wide")
+def favicon():
+    try:
+        from PIL import Image, ImageDraw, ImageFont
+        img = Image.new("RGBA", (96, 96), (0, 0, 0, 0))
+        d = ImageDraw.Draw(img)
+        d.rounded_rectangle((0, 0, 95, 95), radius=22, fill="#2D6A3E")
+        d.text((48, 50), "SG", font=ImageFont.load_default(size=44), fill="#FFFFFF", anchor="mm")
+        return img
+    except Exception:
+        return "🌾"
+
+
+st.set_page_config(page_title="SAWAL GROUP", page_icon=favicon(), layout="wide")
 
 KUTIPAN = [
     "Dari tanganmu di lahan, jutaan piring di Indonesia terisi. Terima kasih sudah bertani.",
@@ -86,11 +98,18 @@ div.stButton>button:hover,div.stFormSubmitButton>button:hover{box-shadow:var(--e
 [class*="st-key-b_"] button{background:var(--bad)!important;color:var(--bg)!important;border:0!important}
 [class*="st-key-b_"] button:disabled{opacity:.4}
 [data-testid="stSidebar"]{background:var(--card)!important;border-radius:0 28px 28px 0}
-.logo{padding:8px 8px 18px}.logo b{display:block;font-size:1.3rem;font-weight:500;color:var(--teks)}
-.logo span{font-size:.8rem;color:var(--muted)}
+.logo{display:flex;align-items:center;gap:12px;padding:6px 6px 20px}
+.logo .mark{flex:none;width:54px;height:54px;border-radius:50%;overflow:hidden;display:flex;align-items:center;justify-content:center;
+ background:var(--pri);color:var(--on-pri);font-weight:700;font-size:1.1rem;letter-spacing:.04em;box-shadow:var(--e1)}
+.logo .mark img{width:100%;height:100%;object-fit:cover}
+.logo .nama b{display:block;font-size:1.1rem;font-weight:700;letter-spacing:.06em;color:var(--teks)}
+.logo .nama span{display:block;margin-top:2px;font-size:.78rem;line-height:1.3;color:var(--muted)}
 [data-testid="stSidebar"] .stButton>button{justify-content:flex-start;gap:10px;min-height:48px;border-radius:28px;background:transparent!important;color:var(--teks)!important}
 [data-testid="stSidebar"] .stButton>button:hover{background:var(--hover)!important;box-shadow:none;filter:none}
-[data-testid="stSidebar"] [data-testid="stBaseButton-primary"]{background:var(--sek-c)!important;color:var(--on-sek-c)!important;font-weight:700}
+[data-testid="stSidebar"] .stButton>button[data-testid="stBaseButton-primary"]{background:var(--sek-c)!important;color:var(--on-sek-c)!important;font-weight:700}
+[data-testid="stSidebar"] .stButton>button>div{justify-content:flex-start!important;width:100%}
+[data-testid="stSidebar"] .stButton>button p{text-align:left}
+[data-testid="stSidebar"] [data-testid="stVerticalBlock"]{gap:.4rem}
 @media (max-width:640px){.appbar{flex-direction:column-reverse;min-height:0}.appbar .foto{flex:0 0 110px;border-radius:0 0 45% 45%/0 0 60% 60%}
  .appbar .isi{padding:22px}.appbar .judul{font-size:1.6rem}.metrik .angka{font-size:2.2rem}.tabel th,.tabel td{padding:10px 12px}}
 @media (prefers-reduced-motion:reduce){.block-container{animation:none}div.stButton>button,div.stFormSubmitButton>button,.tabel tbody tr{transition:none}}
@@ -107,6 +126,20 @@ def foto_latar():
             img.thumbnail((1600, 1600))
             buf = io.BytesIO()
             img.save(buf, "JPEG", quality=70)
+            return base64.b64encode(buf.getvalue()).decode()
+    return None
+
+
+@st.cache_data
+def foto_ayah():
+    """Cari foto profil (nama file diawali 'ayah') di folder aplikasi, potong persegi, ubah ke base64."""
+    from PIL import Image, ImageOps
+    for nama in sorted(os.listdir(".")):
+        if nama.lower().startswith("ayah") and nama.lower().endswith((".jpg", ".jpeg", ".png")):
+            img = ImageOps.exif_transpose(Image.open(nama)).convert("RGB")
+            img = ImageOps.fit(img, (160, 160), method=Image.LANCZOS, centering=(0.5, 0.35))
+            buf = io.BytesIO()
+            img.save(buf, "JPEG", quality=82)
             return base64.b64encode(buf.getvalue()).decode()
     return None
 
@@ -241,7 +274,7 @@ def grafik(df):
 
 # ---------- Login ----------
 if not st.session_state.get("masuk"):
-    hero("🌱 SIA Usaha Tani", "Pencatatan akuntansi usaha tani", "Masuk untuk membuka catatan usaha tani.", "kuning")
+    hero("SAWAL GROUP", "Catatan keuangan usaha tani", "Masuk untuk membuka catatan usaha tani.")
     sandi = st.text_input("Kata sandi", type="password")
     if st.button("Masuk", type="primary"):
         if sandi == st.secrets["APP_PASSWORD"]:
@@ -305,9 +338,11 @@ MENU = [("Laporan", ":material/monitoring:"), ("Musim Tanam", ":material/potted_
 st.session_state.setdefault("menu", "Laporan")
 if st.session_state["menu"] not in dict(MENU):
     st.session_state["menu"] = "Laporan"
+_ay = foto_ayah()
+_mark = f'<img src="data:image/jpeg;base64,{_ay}" alt="">' if _ay else "SG"
 st.sidebar.markdown(
-    '<div class="logo"><b>🌱 SIA Usaha Tani</b><span>Pencatatan akuntansi usaha tani</span></div>',
-    unsafe_allow_html=True)
+    f'<div class="logo"><div class="mark">{_mark}</div><div class="nama"><b>SAWAL GROUP</b>'
+    '<span>Usaha tani · catatan keuangan</span></div></div>', unsafe_allow_html=True)
 for nama, ikon in MENU:
     if st.sidebar.button(nama, icon=ikon, key="nav_" + nama.replace(" ", "_"), width="stretch",
                          type="primary" if st.session_state["menu"] == nama else "secondary"):
