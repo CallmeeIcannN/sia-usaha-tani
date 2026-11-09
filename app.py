@@ -69,10 +69,12 @@ st.markdown("""
 .lini li{position:relative;padding:0 0 18px 16px;color:var(--teks)}
 .lini li::before{content:"";position:absolute;left:-23px;top:5px;width:12px;height:12px;border-radius:50%;background:var(--pri);border:2px solid var(--bg)}
 .lini small{display:block;color:var(--muted);margin-top:2px}
-.panel{position:relative;overflow:hidden;border-radius:28px 28px 28px 80px;padding:24px 28px 88px;background:var(--sek-c);color:var(--on-sek-c);margin-top:1.1rem;box-shadow:var(--e1)}
-.panel small{opacity:.75}.panel .besar{font-size:2.8rem;font-weight:700;line-height:1.1}
-.panel .baris{display:flex;justify-content:space-between;padding:9px 0;border-top:1px solid var(--garis)}
-.panel .tunas{position:absolute;right:22px;bottom:12px;width:80px}
+.buku{margin-top:1.1rem;background:var(--card);border:1px solid var(--garis);border-radius:14px;padding:4px 20px 12px}
+.buku .kepala{padding:14px 0 8px;font-size:.82rem;font-weight:500;color:var(--muted);border-bottom:1px solid var(--garis)}
+.rk{width:100%;border-collapse:collapse;color:var(--teks);font-size:.93rem}
+.rk td{padding:9px 0;border-bottom:1px dotted var(--garis)}.rk tr:last-child td{border-bottom:0}
+.rk .r{text-align:right;font-weight:500;font-variant-numeric:tabular-nums}
+.rk .th td{font-size:.78rem;color:var(--muted);font-weight:500}
 .tabelbox{background:var(--card);border-radius:16px;overflow-x:auto;box-shadow:var(--e1)}
 .tabel{width:100%;border-collapse:collapse;font-size:.92rem;color:var(--teks)}
 .tabel th{background:var(--head);font-weight:500;font-size:.8rem;color:var(--muted);padding:12px 16px;text-align:left;white-space:nowrap}
@@ -176,9 +178,6 @@ st.markdown(f"<style>{_css}</style>", unsafe_allow_html=True)
 
 st.session_state.setdefault("kutipan", random.choice(KUTIPAN))
 
-TUNAS = ('<svg class="tunas" viewBox="0 0 120 140" aria-hidden="true"><path d="M60 138V58" stroke="#2D6A3E" '
-         'stroke-width="5" stroke-linecap="round" fill="none"/><path d="M60 80C60 52 38 38 14 40c0 28 20 44 46 40z" '
-         'fill="#8DBF4A"/><path d="M60 64C60 38 80 22 106 24c0 26-20 42-46 40z" fill="#C5E27A"/></svg>')
 HERO = {
     "Laporan": ("Laporan", "Pantau kondisi keuangan usaha tani", "Biaya, penjualan, dan laba dalam satu tampilan.", "kuning"),
     "Musim Tanam": ("Musim Tanam", "Kelola musim tanam di lahanmu", "Kelola data musim tanam dan aktivitas lahan.", "hijau"),
@@ -409,11 +408,22 @@ elif halaman == "Musim Tanam":
     with kanan:
         n_jalan = sum(1 for m in musim if m["status"] == "berjalan")
         total_luas = sum(m["luas_ha"] or 0 for m in musim)
+        per = {}
+        for m in musim:
+            d = per.setdefault(m["tanaman"], [0, 0.0])
+            d[0] += 1
+            d[1] += m["luas_ha"] or 0
+        komoditas = "".join(f'<tr><td>{sel(k)}</td><td class="r">{v[0]}</td><td class="r">{v[1]:g} ha</td></tr>'
+                            for k, v in per.items())
         st.markdown(
-            f'<div class="panel"><small>Total musim tanam</small><div class="besar">{len(musim)}</div>'
-            f'<div class="baris"><span>Sedang berjalan</span><b>{n_jalan}</b></div>'
-            f'<div class="baris"><span>Sudah selesai</span><b>{len(musim) - n_jalan}</b></div>'
-            f'<div class="baris"><span>Total luas dicatat</span><b>{total_luas:g} ha</b></div>{TUNAS}</div>',
+            '<div class="buku"><div class="kepala">Ringkasan musim tanam</div><table class="rk">'
+            f'<tr><td>Total musim tanam</td><td class="r">{len(musim)}</td></tr>'
+            f'<tr><td>Sedang berjalan</td><td class="r">{n_jalan}</td></tr>'
+            f'<tr><td>Sudah selesai</td><td class="r">{len(musim) - n_jalan}</td></tr>'
+            f'<tr><td>Total luas dicatat</td><td class="r">{total_luas:g} ha</td></tr></table>'
+            '<div class="kepala">Per komoditas</div><table class="rk">'
+            '<tr class="th"><td>Komoditas</td><td class="r">Musim</td><td class="r">Luas</td></tr>'
+            f'{komoditas}</table></div>',
             unsafe_allow_html=True)
     st.subheader("Daftar musim tanam")
     tabel([{**m, "tanaman": f'{IKON.get(m["tanaman"], "🌱")} {m["tanaman"]}',
