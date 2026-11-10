@@ -22,7 +22,7 @@ def favicon():
         return "🌾"
 
 
-st.set_page_config(page_title="SAWAL GROUP", page_icon=favicon(), layout="wide")
+st.set_page_config(page_title="SAWAL GROUP", page_icon=favicon(), layout="wide", initial_sidebar_state="expanded")
 
 KOMODITAS = ["Kentang", "Cabai", "Kobis", "Jagung"]
 KATEGORI = {"bibit": ("Bibit", "blue"), "pupuk": ("Pupuk", "ok"), "obat_tanaman": ("Pestisida", "amber"),
@@ -49,9 +49,10 @@ st.markdown("""
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 .stApp *:not([data-testid="stIconMaterial"]):not(svg):not(path){font-family:'Inter','Segoe UI',system-ui,sans-serif}
 .stApp{background:var(--bg)}
-[data-testid="stToolbar"],[data-testid="stDecoration"],[data-testid="stStatusWidget"],#MainMenu,footer,
+[data-testid="stToolbarActions"],[data-testid="stMainMenu"],[data-testid="stDecoration"],[data-testid="stStatusWidget"],#MainMenu,footer,
 [data-testid="stAppDeployButton"],[class*="viewerBadge"],[class*="_profileContainer"]{display:none!important}
 [data-testid="stHeader"]{background:transparent}
+[data-testid="stExpandSidebarButton"]{display:flex!important}
 .block-container{max-width:1240px;padding-top:1.4rem;padding-bottom:4rem}
 .stApp h3{font-weight:600;font-size:1.05rem;margin:1.4rem 0 .6rem;color:var(--teks)}
 .crumb{font-size:.88rem;color:var(--muted)}.crumb b{color:var(--teks);font-weight:600}.crumb span{display:block;font-size:.76rem;margin-top:2px}
