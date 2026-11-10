@@ -112,6 +112,13 @@ div.stButton>button,div.stFormSubmitButton>button,[data-testid="stPopover"]>butt
 .profil{display:flex;align-items:center;gap:10px;padding:10px 4px 0;color:var(--teks);font-size:.84rem}
 .profil .mark{width:34px;height:34px;border-radius:50%;overflow:hidden;display:flex;align-items:center;justify-content:center;background:var(--sl-bg);color:var(--sl-fg);font-weight:700;font-size:.8rem}
 .profil .mark img{width:100%;height:100%;object-fit:cover}.profil span{display:block;font-size:.72rem;color:var(--muted)}
+[class*="st-key-hal_"]{animation:fadeIn .35s ease both}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+div.stButton>button,div.stFormSubmitButton>button,[data-testid="stPopover"]>button{transition:transform .15s,box-shadow .15s,background .15s}
+div.stButton>button:hover,div.stFormSubmitButton>button:hover,[data-testid="stPopover"]>button:hover{transform:translateY(-1px);box-shadow:0 4px 10px rgba(15,23,42,.14)}
+div.stButton>button:active,div.stFormSubmitButton>button:active,[data-testid="stPopover"]>button:active{transform:scale(.95);box-shadow:none}
+[data-testid="stSidebar"] .stButton>button:hover{transform:none;box-shadow:none}
+@media (prefers-reduced-motion:reduce){[class*="st-key-hal_"]{animation:none}div.stButton>button:hover,div.stButton>button:active{transform:none}}
 @media (max-width:640px){.judul{font-size:1.35rem}.stat .v{font-size:1.25rem}}
 @media (prefers-reduced-motion:reduce){.dot{animation:none}}
 </style>
@@ -384,235 +391,236 @@ with _k3.popover("+ Catat Transaksi", type="primary", width="stretch"):
             st.rerun()
 st.markdown(f'<div class="judul">{halaman}</div><div class="sub">{HALAMAN[halaman]}</div>', unsafe_allow_html=True)
 
-# ---------- Laporan ----------
-if halaman == "Laporan":
-    with st.spinner("Menghitung laporan..."):
-        data = (db.table("laporan_musim_tanam").select("*").order("tanggal_tanam", desc=True).execute().data)
-    if not data:
-        kosong("Belum ada data laporan", "Mulai dari menu Musim Tanam, lalu catat biaya dan hasil panen.")
-        st.stop()
-    df = pd.DataFrame(data)
-    for k in ["total_biaya", "total_penjualan", "total_diterima", "sisa_piutang", "laba_rugi"]:
-        df[k] = pd.to_numeric(df[k])
-    pend, biaya, laba, piutang = (df["total_penjualan"].sum(), df["total_biaya"].sum(),
-                                  df["laba_rugi"].sum(), df["sisa_piutang"].sum())
-    margin = laba / pend * 100 if pend else 0
-    stats([("Total Pendapatan", rp(pend)), ("Total Biaya Operasional", rp(biaya)),
-           ("Laba Bersih" if laba >= 0 else "Rugi Bersih", rp(laba), f"Margin {margin:.0f}%", "hl"),
-           ("Sisa Piutang", rp(piutang), "Semua sudah lunas" if piutang == 0 else "Belum diterima",
-            "ok" if piutang == 0 else "")])
-    k1, k2 = st.columns([6, 4], gap="medium")
-    with k1, st.container(border=True):
-        st.subheader("Pendapatan dan biaya per musim tanam")
-        st.altair_chart(grafik(df), width="stretch")
-    with k2, st.container(border=True):
-        st.subheader("Pendapatan per komoditas")
-        st.altair_chart(donat(df), width="stretch")
-    st.subheader("Rincian finansial per musim tanam")
-    tabel([{"tanaman": r.tanaman, "tgl": tgl_id(r.tanggal_tanam), "biaya": rp(r.total_biaya),
-            "jual": rp(r.total_penjualan), "piutang": rp(r.sisa_piutang), "laba": rp(r.laba_rugi),
-            "_laba": r.laba_rugi, "margin": f"{r.laba_rugi / r.total_penjualan * 100:.0f}%" if r.total_penjualan else "-",
-            "status": r.status} for r in df.itertuples()],
-          [("Komoditas", "tanaman", "l"), ("Tanggal tanam", "tgl", "l"), ("Total biaya", "biaya", "r"),
-           ("Total penjualan", "jual", "r"), ("Sisa piutang", "piutang", "r"), ("Laba bersih", "laba", "r"),
-           ("Margin", "margin", "r"), ("Status", "status", "c")])
+with st.container(key="hal_" + halaman.replace(" ", "_")):
+    # ---------- Laporan ----------
+    if halaman == "Laporan":
+        with st.spinner("Menghitung laporan..."):
+            data = (db.table("laporan_musim_tanam").select("*").order("tanggal_tanam", desc=True).execute().data)
+        if not data:
+            kosong("Belum ada data laporan", "Mulai dari menu Musim Tanam, lalu catat biaya dan hasil panen.")
+            st.stop()
+        df = pd.DataFrame(data)
+        for k in ["total_biaya", "total_penjualan", "total_diterima", "sisa_piutang", "laba_rugi"]:
+            df[k] = pd.to_numeric(df[k])
+        pend, biaya, laba, piutang = (df["total_penjualan"].sum(), df["total_biaya"].sum(),
+                                      df["laba_rugi"].sum(), df["sisa_piutang"].sum())
+        margin = laba / pend * 100 if pend else 0
+        stats([("Total Pendapatan", rp(pend)), ("Total Biaya Operasional", rp(biaya)),
+               ("Laba Bersih" if laba >= 0 else "Rugi Bersih", rp(laba), f"Margin {margin:.0f}%", "hl"),
+               ("Sisa Piutang", rp(piutang), "Semua sudah lunas" if piutang == 0 else "Belum diterima",
+                "ok" if piutang == 0 else "")])
+        k1, k2 = st.columns([6, 4], gap="medium")
+        with k1, st.container(border=True):
+            st.subheader("Pendapatan dan biaya per musim tanam")
+            st.altair_chart(grafik(df), width="stretch")
+        with k2, st.container(border=True):
+            st.subheader("Pendapatan per komoditas")
+            st.altair_chart(donat(df), width="stretch")
+        st.subheader("Rincian finansial per musim tanam")
+        tabel([{"tanaman": r.tanaman, "tgl": tgl_id(r.tanggal_tanam), "biaya": rp(r.total_biaya),
+                "jual": rp(r.total_penjualan), "piutang": rp(r.sisa_piutang), "laba": rp(r.laba_rugi),
+                "_laba": r.laba_rugi, "margin": f"{r.laba_rugi / r.total_penjualan * 100:.0f}%" if r.total_penjualan else "-",
+                "status": r.status} for r in df.itertuples()],
+              [("Komoditas", "tanaman", "l"), ("Tanggal tanam", "tgl", "l"), ("Total biaya", "biaya", "r"),
+               ("Total penjualan", "jual", "r"), ("Sisa piutang", "piutang", "r"), ("Laba bersih", "laba", "r"),
+               ("Margin", "margin", "r"), ("Status", "status", "c")])
 
-# ---------- Musim Tanam ----------
-elif halaman == "Musim Tanam":
-    n_jalan = sum(1 for m in musim if m["status"] == "berjalan")
-    stats([("Total Musim", str(len(musim))),
-           ("Sedang Berjalan", ('<i class="dot"></i>' if n_jalan else "") + str(n_jalan)),
-           ("Sudah Panen", str(len(musim) - n_jalan)),
-           ("Total Luas Lahan", f'{sum(m["luas_ha"] or 0 for m in musim):g} Ha')])
-    kiri, kanan = st.columns([35, 65], gap="medium")
-    with kiri, st.container(border=True):
-        st.subheader("Tambah musim tanam")
-        with st.form("form_musim", clear_on_submit=True, border=False):
-            tanaman = st.selectbox("Komoditas", KOMODITAS)
-            tgl = st.date_input("Tanggal tanam", value=date.today())
-            luas = st.number_input("Luas lahan (hektar)", min_value=0.0, step=0.1)
-            catatan = st.text_input("Catatan (opsional)")
-            if st.form_submit_button("Simpan musim tanam", type="primary", width="stretch"):
-                simpan("musim_tanam", {"tanaman": tanaman, "tanggal_tanam": str(tgl),
-                                       "luas_ha": luas or None, "catatan": catatan or None})
+    # ---------- Musim Tanam ----------
+    elif halaman == "Musim Tanam":
+        n_jalan = sum(1 for m in musim if m["status"] == "berjalan")
+        stats([("Total Musim", str(len(musim))),
+               ("Sedang Berjalan", ('<i class="dot"></i>' if n_jalan else "") + str(n_jalan)),
+               ("Sudah Panen", str(len(musim) - n_jalan)),
+               ("Total Luas Lahan", f'{sum(m["luas_ha"] or 0 for m in musim):g} Ha')])
+        kiri, kanan = st.columns([35, 65], gap="medium")
+        with kiri, st.container(border=True):
+            st.subheader("Tambah musim tanam")
+            with st.form("form_musim", clear_on_submit=True, border=False):
+                tanaman = st.selectbox("Komoditas", KOMODITAS)
+                tgl = st.date_input("Tanggal tanam", value=date.today())
+                luas = st.number_input("Luas lahan (hektar)", min_value=0.0, step=0.1)
+                catatan = st.text_input("Catatan (opsional)")
+                if st.form_submit_button("Simpan musim tanam", type="primary", width="stretch"):
+                    simpan("musim_tanam", {"tanaman": tanaman, "tanggal_tanam": str(tgl),
+                                           "luas_ha": luas or None, "catatan": catatan or None})
 
-    def aksi_selesai(b):
-        if b["status"] == "berjalan" and st.button("Selesai", key=f"sel_{b['id']}", width="stretch"):
-            db.table("musim_tanam").update(
-                {"status": "selesai", "tanggal_panen": str(date.today())}).eq("id", b["id"]).execute()
-            st.session_state["pesan"] = "Musim tanam ditandai selesai."
-            st.rerun()
+        def aksi_selesai(b):
+            if b["status"] == "berjalan" and st.button("Selesai", key=f"sel_{b['id']}", width="stretch"):
+                db.table("musim_tanam").update(
+                    {"status": "selesai", "tanggal_panen": str(date.today())}).eq("id", b["id"]).execute()
+                st.session_state["pesan"] = "Musim tanam ditandai selesai."
+                st.rerun()
 
-    with kanan:
-        st.subheader("Daftar musim tanam")
-        daftar("musim", [{"id": m["id"], "tanaman": m["tanaman"], "tgl": tgl_id(m["tanggal_tanam"]),
-                          "luas": f'{m["luas_ha"]:g} Ha' if m["luas_ha"] else "-", "status": m["status"]}
-                         for m in musim],
-               [("Komoditas", "tanaman", "l", 1.3), ("Mulai", "tgl", "l", 1.5), ("Luas", "luas", "r", 0.9),
-                ("Status", "status", "c", 1.2)],
-               [(1.0, aksi_selesai),
-                (0.9, aksi_hapus("musim_tanam", "ms", "Hapus musim tanam ini? Biaya dan penjualannya ikut terhapus."))])
+        with kanan:
+            st.subheader("Daftar musim tanam")
+            daftar("musim", [{"id": m["id"], "tanaman": m["tanaman"], "tgl": tgl_id(m["tanggal_tanam"]),
+                              "luas": f'{m["luas_ha"]:g} Ha' if m["luas_ha"] else "-", "status": m["status"]}
+                             for m in musim],
+                   [("Komoditas", "tanaman", "l", 1.3), ("Mulai", "tgl", "l", 1.5), ("Luas", "luas", "r", 0.9),
+                    ("Status", "status", "c", 1.2)],
+                   [(1.0, aksi_selesai),
+                    (0.9, aksi_hapus("musim_tanam", "ms", "Hapus musim tanam ini? Biaya dan penjualannya ikut terhapus."))])
 
-# ---------- Biaya ----------
-elif halaman == "Biaya":
-    if not musim:
-        st.warning("Buat musim tanam dulu di menu Musim Tanam.")
-        st.stop()
-    total = sum(b["jumlah"] for b in biaya_all)
-    per = {k: 0 for k in KATEGORI}
-    for b in biaya_all:
-        per[b["kategori"]] = per.get(b["kategori"], 0) + b["jumlah"]
-    besar = max(per, key=per.get) if total else None
-    a, b2 = st.columns([55, 45], gap="medium")
-    with a:
-        stats([("Total Biaya", rp(total)), ("Rata-rata Biaya / Musim", rp(total / len(musim))),
-               ("Total Transaksi", str(len(biaya_all))),
-               ("Alokasi Terbesar", f"{KATEGORI[besar][0]} · {per[besar] / total * 100:.0f}%" if besar else "-")])
-    with b2, st.container(border=True):
-        st.subheader("Biaya per kategori")
-        mx = max(per.values()) if total else 0
-        st.markdown("".join(
-            f'<div class="bar"><div class="a">{KATEGORI[k][0]}<span>{rp(v)}</span></div>'
-            f'<div class="t"><i style="width:{(v / mx * 100) if mx else 0:.0f}%"></i></div></div>'
-            for k, v in sorted(per.items(), key=lambda x: -x[1])), unsafe_allow_html=True)
-    kiri, kanan = st.columns([35, 65], gap="medium")
-    with kiri, st.container(border=True):
-        st.subheader("Catat biaya operasional")
-        with st.form("form_biaya", clear_on_submit=True, border=False):
-            mid = st.selectbox("Musim tanam", list(nama_musim), format_func=nama_musim.get)
-            tgl = st.date_input("Tanggal", value=date.today())
-            kat = st.selectbox("Kategori", list(KATEGORI), format_func=lambda x: KATEGORI[x][0])
+    # ---------- Biaya ----------
+    elif halaman == "Biaya":
+        if not musim:
+            st.warning("Buat musim tanam dulu di menu Musim Tanam.")
+            st.stop()
+        total = sum(b["jumlah"] for b in biaya_all)
+        per = {k: 0 for k in KATEGORI}
+        for b in biaya_all:
+            per[b["kategori"]] = per.get(b["kategori"], 0) + b["jumlah"]
+        besar = max(per, key=per.get) if total else None
+        a, b2 = st.columns([55, 45], gap="medium")
+        with a:
+            stats([("Total Biaya", rp(total)), ("Rata-rata Biaya / Musim", rp(total / len(musim))),
+                   ("Total Transaksi", str(len(biaya_all))),
+                   ("Alokasi Terbesar", f"{KATEGORI[besar][0]} · {per[besar] / total * 100:.0f}%" if besar else "-")])
+        with b2, st.container(border=True):
+            st.subheader("Biaya per kategori")
+            mx = max(per.values()) if total else 0
+            st.markdown("".join(
+                f'<div class="bar"><div class="a">{KATEGORI[k][0]}<span>{rp(v)}</span></div>'
+                f'<div class="t"><i style="width:{(v / mx * 100) if mx else 0:.0f}%"></i></div></div>'
+                for k, v in sorted(per.items(), key=lambda x: -x[1])), unsafe_allow_html=True)
+        kiri, kanan = st.columns([35, 65], gap="medium")
+        with kiri, st.container(border=True):
+            st.subheader("Catat biaya operasional")
+            with st.form("form_biaya", clear_on_submit=True, border=False):
+                mid = st.selectbox("Musim tanam", list(nama_musim), format_func=nama_musim.get)
+                tgl = st.date_input("Tanggal", value=date.today())
+                kat = st.selectbox("Kategori", list(KATEGORI), format_func=lambda x: KATEGORI[x][0])
+                ket = st.text_input("Keterangan (opsional)")
+                jml = st.number_input("Jumlah (Rp)", min_value=0, step=1000, format="%d")
+                if st.form_submit_button("Simpan biaya", type="primary", width="stretch"):
+                    simpan("biaya", {"musim_tanam_id": mid, "tanggal": str(tgl), "kategori": kat,
+                                     "keterangan": ket or None, "jumlah": jml})
+        with kanan:
+            st.subheader("Riwayat biaya")
+            f1, f2 = st.columns(2)
+            fm = f1.selectbox("Musim tanam", ["Semua"] + list(nama_musim), key="f_bm",
+                              format_func=lambda x: x if x == "Semua" else nama_musim[x])
+            fk = f2.selectbox("Kategori", ["Semua"] + list(KATEGORI), key="f_bk",
+                              format_func=lambda x: x if x == "Semua" else KATEGORI[x][0])
+            rows = [{"id": b["id"], "tgl": b["tanggal"], "musim": nama_musim.get(b["musim_tanam_id"], "-"),
+                     "kategori": b["kategori"], "ket": b["keterangan"], "jumlah": rp(b["jumlah"])}
+                    for b in biaya_all
+                    if (fm == "Semua" or b["musim_tanam_id"] == fm) and (fk == "Semua" or b["kategori"] == fk)]
+            daftar("biaya", rows[:30],
+                   [("Tanggal", "tgl", "l", 1.1), ("Musim", "musim", "l", 1.7), ("Kategori", "kategori", "l", 1.1),
+                    ("Keterangan", "ket", "l", 1.3), ("Jumlah", "jumlah", "r", 1.3)],
+                   [(0.8, aksi_hapus("biaya", "bi"))])
+            if len(rows) > 30:
+                st.caption(f"Menampilkan 30 dari {len(rows)} catatan terbaru.")
+
+    # ---------- Penjualan ----------
+    elif halaman == "Penjualan":
+        if not musim:
+            st.warning("Buat musim tanam dulu di menu Musim Tanam.")
+            st.stop()
+        tot = sum(p["total"] for p in jual_all)
+        per = {k: sum(p["total"] for p in jual_all if p["jenis_pembeli"] == k) for k in PEMBELI}
+        kg = sum(p["jumlah_kg"] for p in jual_all)
+        pc = lambda v: f"{v / tot * 100:.0f}% dari total" if tot else "0% dari total"
+        stats([("Total Penjualan", rp(tot), f"Eceran {rp(per['eceran'])}" if per["eceran"] else ""),
+               ("Saluran Tengkulak", rp(per["tengkulak"]), pc(per["tengkulak"])),
+               ("Saluran Mitra", rp(per["mitra"]), pc(per["mitra"])),
+               ("Volume Terjual", f"{kg:,.0f} kg".replace(",", "."), f"{kg / 1000:g} ton")])
+
+        def simpan_jual():
+            s = st.session_state
+            tgl_tanam = next(m["tanggal_tanam"] for m in musim if m["id"] == s["j_musim"])
+            if s["j_kg"] <= 0:
+                s["galat"] = "Jumlah kg harus lebih dari 0."
+                return
+            if str(s["j_tgl"]) < tgl_tanam:
+                s["galat"] = "Tanggal penjualan tidak boleh lebih awal dari tanggal tanam."
+                return
+            try:
+                db.table("penjualan").insert({
+                    "musim_tanam_id": s["j_musim"], "tanggal": str(s["j_tgl"]), "jenis_pembeli": s["j_jenis"],
+                    "nama_pembeli": s["j_nama"] or None, "jumlah_kg": s["j_kg"], "harga_per_kg": s["j_harga"]}).execute()
+            except Exception as e:
+                s["galat"] = f"Data belum tersimpan. ({e})"
+                return
+            s["pesan"] = "Penjualan tersimpan."
+            s["j_kg"], s["j_harga"], s["j_nama"] = 0.0, 0, ""
+
+        kiri, kanan = st.columns([35, 65], gap="medium")
+        with kiri, st.container(border=True):
+            st.subheader("Catat penjualan")
+            st.selectbox("Musim tanam", list(nama_musim), format_func=nama_musim.get, key="j_musim")
+            st.date_input("Tanggal", value=date.today(), key="j_tgl")
+            st.selectbox("Saluran penjualan", list(PEMBELI), format_func=lambda x: PEMBELI[x][0], key="j_jenis")
+            st.text_input("Nama pembeli (opsional)", key="j_nama")
+            st.number_input("Jumlah (kg)", min_value=0.0, step=10.0, key="j_kg")
+            st.number_input("Harga per kg (Rp)", min_value=0, step=100, format="%d", key="j_harga")
+            st.markdown(f'<div class="sub-total"><span>Subtotal</span><b>'
+                        f'{rp(st.session_state.get("j_kg", 0) * st.session_state.get("j_harga", 0))}</b></div>',
+                        unsafe_allow_html=True)
+            st.button("Simpan penjualan", type="primary", width="stretch", on_click=simpan_jual)
+        with kanan:
+            st.subheader("Riwayat penjualan")
+            rows = [{"id": p["id"], "tgl": (p["tanggal"], nama_musim.get(p["musim_tanam_id"], "-")),
+                     "saluran": p["jenis_pembeli"], "nama": p["nama_pembeli"], "kg": f'{p["jumlah_kg"]:g} kg',
+                     "harga": rp(p["harga_per_kg"]), "total": rp(p["total"])} for p in jual_all]
+            daftar("jual", rows[:30],
+                   [("Tanggal", "tgl", "l", 1.8), ("Saluran", "saluran", "l", 1.1), ("Pembeli", "nama", "l", 1.1),
+                    ("Jumlah", "kg", "r", 1.0), ("Harga/kg", "harga", "r", 1.1), ("Subtotal", "total", "r", 1.3)],
+                   [(0.8, aksi_hapus("penjualan", "pj", "Hapus penjualan ini? Pembayarannya ikut terhapus."))])
+            if len(rows) > 30:
+                st.caption(f"Menampilkan 30 dari {len(rows)} penjualan terbaru.")
+
+    # ---------- Pembayaran ----------
+    elif halaman == "Pembayaran":
+        if not jual_all:
+            st.warning("Catat penjualan dulu di menu Penjualan.")
+            st.stop()
+        dibayar = {}
+        for y in bayar_all:
+            dibayar[y["penjualan_id"]] = dibayar.get(y["penjualan_id"], 0) + y["jumlah"]
+        total_jual, diterima = sum(p["total"] for p in jual_all), sum(dibayar.values())
+        stats([("Total Kas Diterima", rp(diterima), "", "ok"), ("Total Nilai Penjualan", rp(total_jual)),
+               ("Sisa Piutang", rp(total_jual - diterima), "Semua sudah lunas" if total_jual - diterima <= 0 else "Belum diterima",
+                "ok" if total_jual - diterima <= 0 else "")])
+        label = {p["id"]: f'{tgl_id(p["tanggal"])} · {p["nama_pembeli"] or PEMBELI[p["jenis_pembeli"]][0]} · {rp(p["total"])}'
+                 for p in jual_all}
+
+        @st.dialog("Catat Pembayaran")
+        def dialog_bayar(p):
+            sisa = p["total"] - dibayar.get(p["id"], 0)
+            st.markdown(f'**{label[p["id"]]}**  \nSisa tagihan: **{rp(sisa)}**')
+            tgl = st.date_input("Tanggal diterima", value=date.today())
+            jml = st.number_input("Jumlah diterima (Rp)", min_value=0, value=max(int(sisa), 0), step=1000, format="%d")
             ket = st.text_input("Keterangan (opsional)")
-            jml = st.number_input("Jumlah (Rp)", min_value=0, step=1000, format="%d")
-            if st.form_submit_button("Simpan biaya", type="primary", width="stretch"):
-                simpan("biaya", {"musim_tanam_id": mid, "tanggal": str(tgl), "kategori": kat,
-                                 "keterangan": ket or None, "jumlah": jml})
-    with kanan:
-        st.subheader("Riwayat biaya")
-        f1, f2 = st.columns(2)
-        fm = f1.selectbox("Musim tanam", ["Semua"] + list(nama_musim), key="f_bm",
-                          format_func=lambda x: x if x == "Semua" else nama_musim[x])
-        fk = f2.selectbox("Kategori", ["Semua"] + list(KATEGORI), key="f_bk",
-                          format_func=lambda x: x if x == "Semua" else KATEGORI[x][0])
-        rows = [{"id": b["id"], "tgl": b["tanggal"], "musim": nama_musim.get(b["musim_tanam_id"], "-"),
-                 "kategori": b["kategori"], "ket": b["keterangan"], "jumlah": rp(b["jumlah"])}
-                for b in biaya_all
-                if (fm == "Semua" or b["musim_tanam_id"] == fm) and (fk == "Semua" or b["kategori"] == fk)]
-        daftar("biaya", rows[:30],
-               [("Tanggal", "tgl", "l", 1.1), ("Musim", "musim", "l", 1.7), ("Kategori", "kategori", "l", 1.1),
-                ("Keterangan", "ket", "l", 1.3), ("Jumlah", "jumlah", "r", 1.3)],
-               [(0.8, aksi_hapus("biaya", "bi"))])
-        if len(rows) > 30:
-            st.caption(f"Menampilkan 30 dari {len(rows)} catatan terbaru.")
+            if st.button("Simpan pembayaran", type="primary", width="stretch"):
+                if jml <= 0:
+                    st.error("Jumlah harus lebih dari 0.")
+                elif str(tgl) < p["tanggal"]:
+                    st.error("Tanggal diterima tidak boleh lebih awal dari tanggal penjualan.")
+                else:
+                    simpan("pembayaran", {"penjualan_id": p["id"], "tanggal": str(tgl), "jumlah": jml,
+                                          "keterangan": ket or None})
 
-# ---------- Penjualan ----------
-elif halaman == "Penjualan":
-    if not musim:
-        st.warning("Buat musim tanam dulu di menu Musim Tanam.")
-        st.stop()
-    tot = sum(p["total"] for p in jual_all)
-    per = {k: sum(p["total"] for p in jual_all if p["jenis_pembeli"] == k) for k in PEMBELI}
-    kg = sum(p["jumlah_kg"] for p in jual_all)
-    pc = lambda v: f"{v / tot * 100:.0f}% dari total" if tot else "0% dari total"
-    stats([("Total Penjualan", rp(tot), f"Eceran {rp(per['eceran'])}" if per["eceran"] else ""),
-           ("Saluran Tengkulak", rp(per["tengkulak"]), pc(per["tengkulak"])),
-           ("Saluran Mitra", rp(per["mitra"]), pc(per["mitra"])),
-           ("Volume Terjual", f"{kg:,.0f} kg".replace(",", "."), f"{kg / 1000:g} ton")])
+        def aksi_bayar(b):
+            if st.button("Catat Pembayaran", key=f"cb_{b['id']}", width="stretch"):
+                dialog_bayar(next(p for p in jual_all if p["id"] == b["id"]))
 
-    def simpan_jual():
-        s = st.session_state
-        tgl_tanam = next(m["tanggal_tanam"] for m in musim if m["id"] == s["j_musim"])
-        if s["j_kg"] <= 0:
-            s["galat"] = "Jumlah kg harus lebih dari 0."
-            return
-        if str(s["j_tgl"]) < tgl_tanam:
-            s["galat"] = "Tanggal penjualan tidak boleh lebih awal dari tanggal tanam."
-            return
-        try:
-            db.table("penjualan").insert({
-                "musim_tanam_id": s["j_musim"], "tanggal": str(s["j_tgl"]), "jenis_pembeli": s["j_jenis"],
-                "nama_pembeli": s["j_nama"] or None, "jumlah_kg": s["j_kg"], "harga_per_kg": s["j_harga"]}).execute()
-        except Exception as e:
-            s["galat"] = f"Data belum tersimpan. ({e})"
-            return
-        s["pesan"] = "Penjualan tersimpan."
-        s["j_kg"], s["j_harga"], s["j_nama"] = 0.0, 0, ""
+        def status(p):
+            d = dibayar.get(p["id"], 0)
+            return "lunas" if d >= p["total"] else ("sebagian" if d > 0 else "belum")
 
-    kiri, kanan = st.columns([35, 65], gap="medium")
-    with kiri, st.container(border=True):
-        st.subheader("Catat penjualan")
-        st.selectbox("Musim tanam", list(nama_musim), format_func=nama_musim.get, key="j_musim")
-        st.date_input("Tanggal", value=date.today(), key="j_tgl")
-        st.selectbox("Saluran penjualan", list(PEMBELI), format_func=lambda x: PEMBELI[x][0], key="j_jenis")
-        st.text_input("Nama pembeli (opsional)", key="j_nama")
-        st.number_input("Jumlah (kg)", min_value=0.0, step=10.0, key="j_kg")
-        st.number_input("Harga per kg (Rp)", min_value=0, step=100, format="%d", key="j_harga")
-        st.markdown(f'<div class="sub-total"><span>Subtotal</span><b>'
-                    f'{rp(st.session_state.get("j_kg", 0) * st.session_state.get("j_harga", 0))}</b></div>',
-                    unsafe_allow_html=True)
-        st.button("Simpan penjualan", type="primary", width="stretch", on_click=simpan_jual)
-    with kanan:
-        st.subheader("Riwayat penjualan")
-        rows = [{"id": p["id"], "tgl": (p["tanggal"], nama_musim.get(p["musim_tanam_id"], "-")),
-                 "saluran": p["jenis_pembeli"], "nama": p["nama_pembeli"], "kg": f'{p["jumlah_kg"]:g} kg',
-                 "harga": rp(p["harga_per_kg"]), "total": rp(p["total"])} for p in jual_all]
-        daftar("jual", rows[:30],
-               [("Tanggal", "tgl", "l", 1.8), ("Saluran", "saluran", "l", 1.1), ("Pembeli", "nama", "l", 1.1),
-                ("Jumlah", "kg", "r", 1.0), ("Harga/kg", "harga", "r", 1.1), ("Subtotal", "total", "r", 1.3)],
-               [(0.8, aksi_hapus("penjualan", "pj", "Hapus penjualan ini? Pembayarannya ikut terhapus."))])
-        if len(rows) > 30:
-            st.caption(f"Menampilkan 30 dari {len(rows)} penjualan terbaru.")
-
-# ---------- Pembayaran ----------
-elif halaman == "Pembayaran":
-    if not jual_all:
-        st.warning("Catat penjualan dulu di menu Penjualan.")
-        st.stop()
-    dibayar = {}
-    for y in bayar_all:
-        dibayar[y["penjualan_id"]] = dibayar.get(y["penjualan_id"], 0) + y["jumlah"]
-    total_jual, diterima = sum(p["total"] for p in jual_all), sum(dibayar.values())
-    stats([("Total Kas Diterima", rp(diterima), "", "ok"), ("Total Nilai Penjualan", rp(total_jual)),
-           ("Sisa Piutang", rp(total_jual - diterima), "Semua sudah lunas" if total_jual - diterima <= 0 else "Belum diterima",
-            "ok" if total_jual - diterima <= 0 else "")])
-    label = {p["id"]: f'{tgl_id(p["tanggal"])} · {p["nama_pembeli"] or PEMBELI[p["jenis_pembeli"]][0]} · {rp(p["total"])}'
-             for p in jual_all}
-
-    @st.dialog("Catat Pembayaran")
-    def dialog_bayar(p):
-        sisa = p["total"] - dibayar.get(p["id"], 0)
-        st.markdown(f'**{label[p["id"]]}**  \nSisa tagihan: **{rp(sisa)}**')
-        tgl = st.date_input("Tanggal diterima", value=date.today())
-        jml = st.number_input("Jumlah diterima (Rp)", min_value=0, value=max(int(sisa), 0), step=1000, format="%d")
-        ket = st.text_input("Keterangan (opsional)")
-        if st.button("Simpan pembayaran", type="primary", width="stretch"):
-            if jml <= 0:
-                st.error("Jumlah harus lebih dari 0.")
-            elif str(tgl) < p["tanggal"]:
-                st.error("Tanggal diterima tidak boleh lebih awal dari tanggal penjualan.")
-            else:
-                simpan("pembayaran", {"penjualan_id": p["id"], "tanggal": str(tgl), "jumlah": jml,
-                                      "keterangan": ket or None})
-
-    def aksi_bayar(b):
-        if st.button("Catat Pembayaran", key=f"cb_{b['id']}", width="stretch"):
-            dialog_bayar(next(p for p in jual_all if p["id"] == b["id"]))
-
-    def status(p):
-        d = dibayar.get(p["id"], 0)
-        return "lunas" if d >= p["total"] else ("sebagian" if d > 0 else "belum")
-
-    st.subheader("Tagihan penjualan")
-    daftar("tagihan", [{"id": p["id"], "tgl": (tgl_id(p["tanggal"]), nama_musim.get(p["musim_tanam_id"], "-")),
-                        "saluran": p["jenis_pembeli"], "total": rp(p["total"]), "dibayar": rp(dibayar.get(p["id"], 0)),
-                        "sisa": rp(max(p["total"] - dibayar.get(p["id"], 0), 0)), "status": status(p)}
-                       for p in jual_all][:30],
-           [("Penjualan", "tgl", "l", 1.8), ("Saluran", "saluran", "l", 1.0), ("Total", "total", "r", 1.2),
-            ("Dibayar", "dibayar", "r", 1.2), ("Sisa", "sisa", "r", 1.2), ("Status", "status", "c", 1.1)],
-           [(1.4, aksi_bayar)])
-    st.subheader("Riwayat kas diterima")
-    daftar("kas", [{"id": y["id"], "tgl": tgl_id(y["tanggal"]), "jual": label.get(y["penjualan_id"], "-"),
-                    "jumlah": rp(y["jumlah"]), "ket": y["keterangan"]} for y in bayar_all][:30],
-           [("Tanggal", "tgl", "l", 1.3), ("Penjualan", "jual", "l", 3.0), ("Jumlah", "jumlah", "r", 1.2),
-            ("Keterangan", "ket", "l", 1.3)],
-           [(0.8, aksi_hapus("pembayaran", "by"))])
+        st.subheader("Tagihan penjualan")
+        daftar("tagihan", [{"id": p["id"], "tgl": (tgl_id(p["tanggal"]), nama_musim.get(p["musim_tanam_id"], "-")),
+                            "saluran": p["jenis_pembeli"], "total": rp(p["total"]), "dibayar": rp(dibayar.get(p["id"], 0)),
+                            "sisa": rp(max(p["total"] - dibayar.get(p["id"], 0), 0)), "status": status(p)}
+                           for p in jual_all][:30],
+               [("Penjualan", "tgl", "l", 1.8), ("Saluran", "saluran", "l", 1.0), ("Total", "total", "r", 1.2),
+                ("Dibayar", "dibayar", "r", 1.2), ("Sisa", "sisa", "r", 1.2), ("Status", "status", "c", 1.1)],
+               [(1.4, aksi_bayar)])
+        st.subheader("Riwayat kas diterima")
+        daftar("kas", [{"id": y["id"], "tgl": tgl_id(y["tanggal"]), "jual": label.get(y["penjualan_id"], "-"),
+                        "jumlah": rp(y["jumlah"]), "ket": y["keterangan"]} for y in bayar_all][:30],
+               [("Tanggal", "tgl", "l", 1.3), ("Penjualan", "jual", "l", 3.0), ("Jumlah", "jumlah", "r", 1.2),
+                ("Keterangan", "ket", "l", 1.3)],
+               [(0.8, aksi_hapus("pembayaran", "by"))])
