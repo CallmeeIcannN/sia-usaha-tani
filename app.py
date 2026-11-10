@@ -133,20 +133,42 @@ DARK = ("--bg:#0B1220;--card:#111A2C;--garis:#1F2A3F;--muted:#94A3B8;--head:#162
         "--ro-bg:#4C0519;--ro-fg:#FDA4AF;--sl-bg:#1E293B;--sl-fg:#CBD5E1;--vi-bg:#2E1065;--vi-fg:#C4B5FD")
 
 
+GELAP = (
+    '.stApp{background-color:#0B1220!important;color:#E2E8F0!important}'
+    '.stApp h1,.stApp h2,.stApp h3,.stApp p,.stApp label,.stApp li,.stApp span,'
+    '.stApp [data-testid="stMarkdownContainer"],.stApp [data-testid="stCaptionContainer"]{color:#E2E8F0!important}'
+    '.stApp .tile span,.stApp .stat .l,.stApp .stat .s,.stApp .mut,.stApp .th,.stApp .sub,.stApp .crumb,.stApp .logo span,'
+    '.stApp .sub-total span,.stApp .bar .a span{color:#94A3B8!important}'
+    '.stApp .stat.hl .l,.stApp .stat.hl .s,.stApp .stat.hl .v{color:#FFFFFF!important}'
+    '.stApp [data-baseweb="input"],.stApp [data-baseweb="base-input"],.stApp [data-baseweb="select"]>div,'
+    '.stApp textarea,.stApp input{background-color:#16213A!important;color:#E2E8F0!important;'
+    'border-color:#334155!important;-webkit-text-fill-color:#E2E8F0!important}'
+    '.stApp input::placeholder,.stApp textarea::placeholder{color:#94A3B8!important;opacity:1!important;'
+    '-webkit-text-fill-color:#94A3B8!important}'
+    '.stApp [data-baseweb="select"] *,.stApp [data-baseweb="input"] svg{color:#E2E8F0!important;fill:#CBD5E1!important}'
+    '.stApp [data-baseweb="input"]:focus-within{border-color:#22C55E!important}'
+    '[data-baseweb="popover"],[data-baseweb="popover"]>div,[data-baseweb="menu"],[data-baseweb="popover"] ul,'
+    '[data-testid="stPopoverBody"]{background-color:#16213A!important;color:#E2E8F0!important}'
+    '[data-baseweb="popover"] *{color:#E2E8F0!important}'
+    '[data-baseweb="popover"] li:hover,[data-baseweb="menu"] li:hover{background-color:#1F2A3F!important}'
+    '.stApp [data-testid^="stBaseButton-secondary"]{background:#111A2C!important;color:#E2E8F0!important;border-color:#334155!important}'
+)
+TERANG = (
+    '.stApp{background-color:#F8FAFC!important;color:#0F172A!important}'
+    '.stApp h1,.stApp h2,.stApp h3,.stApp p,.stApp label,.stApp li,'
+    '.stApp [data-testid="stMarkdownContainer"],.stApp [data-testid="stCaptionContainer"]{color:#0F172A!important}'
+    '.stApp [data-baseweb="input"],.stApp [data-baseweb="base-input"],.stApp [data-baseweb="select"]>div,'
+    '.stApp textarea,.stApp input{background-color:#FFFFFF!important;color:#0F172A!important}'
+)
+
+
 def css_tampilan(mode):
     if mode == "Gelap":
-        return (f":root{{{DARK}}}.stApp{{background-color:#0B1220!important;color:#E2E8F0!important}}"
-                '.stApp h1,.stApp h2,.stApp h3,.stApp p,.stApp label,.stApp li,'
-                '.stApp [data-testid="stMarkdownContainer"],.stApp [data-testid="stCaptionContainer"]{color:#E2E8F0!important}'
-                '.stApp [data-baseweb="input"],.stApp [data-baseweb="base-input"],.stApp [data-baseweb="select"]>div,'
-                '.stApp textarea,.stApp input{background-color:#16213A!important;color:#E2E8F0!important}')
+        return f":root{{{DARK}}}" + GELAP
     if mode == "Terang":
-        return (f":root{{{LIGHT}}}.stApp{{background-color:#F8FAFC!important;color:#0F172A!important}}"
-                '.stApp h1,.stApp h2,.stApp h3,.stApp p,.stApp label,.stApp li,'
-                '.stApp [data-testid="stMarkdownContainer"],.stApp [data-testid="stCaptionContainer"]{color:#0F172A!important}'
-                '.stApp [data-baseweb="input"],.stApp [data-baseweb="base-input"],.stApp [data-baseweb="select"]>div,'
-                '.stApp textarea,.stApp input{background-color:#FFFFFF!important;color:#0F172A!important}')
-    return f":root{{{LIGHT}}}@media (prefers-color-scheme:dark){{:root{{{DARK}}}}}"
+        return f":root{{{LIGHT}}}" + TERANG
+    # Otomatis: ikut perangkat (komponen bawaan Streamlit tetap terang, jadi mode gelap perangkat ditambal sama seperti Gelap)
+    return f":root{{{LIGHT}}}@media (prefers-color-scheme:dark){{:root{{{DARK}}}{GELAP}}}"
 
 
 st.session_state.setdefault("mode_tampilan", "Terang")
