@@ -215,20 +215,102 @@ def sel(v):
     return html.escape(str(v)).replace("$", "&#36;")
 
 
-# ---------- Login ----------
+# ---------- Halaman awal dan login ----------
+@st.cache_data
+def foto_latar():
+    """Cari foto latar (nama file diawali 'latar') di folder aplikasi, perkecil, ubah ke base64."""
+    from PIL import Image
+    for nama in sorted(os.listdir(".")):
+        if nama.lower().startswith("latar") and nama.lower().endswith((".jpg", ".jpeg", ".png")):
+            img = Image.open(nama).convert("RGB")
+            img.thumbnail((1600, 1600))
+            buf = io.BytesIO()
+            img.save(buf, "JPEG", quality=72)
+            return base64.b64encode(buf.getvalue()).decode()
+    return None
+
+
+CSS_DEPAN = """
+<style>
+:root{--foto:FOTO_LATAR}
+[data-testid="stSidebar"],[data-testid="stSidebarCollapsedControl"],[data-testid="stExpandSidebarButton"]{display:none!important}
+.lencana{width:112px;height:112px;margin:0 auto 22px;border-radius:50%;background:#15803D;border:6px solid rgba(255,255,255,.92);
+ display:flex;align-items:center;justify-content:center;font-size:2rem;font-weight:700;letter-spacing:.04em;color:#fff;box-shadow:0 10px 30px rgba(0,0,0,.35)}
+.latar-hijau{background-image:linear-gradient(rgba(10,45,22,.80),rgba(10,45,22,.90)),var(--foto);background-size:cover;background-position:center bottom}
+CSS_TAHAP
+</style>
+"""
+CSS_AWAL = """
+.stApp{background-image:linear-gradient(rgba(10,45,22,.78),rgba(10,45,22,.90)),var(--foto);background-size:cover;background-position:center bottom;background-attachment:fixed}
+.block-container{max-width:760px;padding-top:15vh}
+.awal{text-align:center;animation:naik .6s ease both}
+.awal .t1{font-size:2.8rem;font-weight:800;letter-spacing:.06em;color:#fff!important}
+.awal .t2{font-size:1.2rem;margin:8px 0 14px;color:#E2F5E8!important}
+.awal .t3{max-width:46ch;margin:0 auto 28px;color:#CFE9D8!important;line-height:1.6}
+.stApp [class*="st-key-awal_masuk"] button{background:#fff!important;color:#15803D!important;border:0!important;border-radius:999px;font-weight:700;min-height:48px}
+@keyframes naik{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+@media (max-width:640px){.awal .t1{font-size:2rem}}
+"""
+CSS_LOGIN = """
+.block-container{max-width:100%!important;padding:0!important}
+[data-testid="stHorizontalBlock"]{gap:0!important}
+.kiri{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:40px;color:#fff;
+ animation:geser .55s ease both}
+.kiri .t1{font-size:1.9rem;font-weight:800;letter-spacing:.05em;color:#fff!important}
+.kiri .t2{margin-top:6px;color:#CFE9D8!important}
+[class*="st-key-loginform"]{min-height:100vh;display:flex;flex-direction:column;justify-content:center;padding:0 13%;background:var(--card);animation:masukKanan .55s ease both}
+.sambut{text-align:center;font-size:1.9rem;font-weight:800;color:var(--teks)}
+.sambut-s{text-align:center;color:var(--muted);margin:4px 0 22px}
+.hakcipta{text-align:center;color:var(--muted);font-size:.78rem;margin-top:18px}
+@keyframes geser{from{transform:translateX(-24%);opacity:.35}to{transform:none;opacity:1}}
+@keyframes masukKanan{from{opacity:0;transform:translateX(28px)}to{opacity:1;transform:none}}
+@media (max-width:768px){.kiri{min-height:32vh;padding:28px}[class*="st-key-loginform"]{min-height:auto;padding:28px 8%}}
+@media (prefers-reduced-motion:reduce){.awal,.kiri,[class*="st-key-loginform"]{animation:none}}
+"""
+
+
+def css_depan(tahap):
+    foto = foto_latar()
+    var = f"url(data:image/jpeg;base64,{foto})" if foto else "linear-gradient(#14532D,#14532D)"
+    isi = (CSS_DEPAN.replace("FOTO_LATAR", var)
+           .replace("CSS_TAHAP", CSS_AWAL if tahap == "awal" else CSS_LOGIN))
+    st.markdown(isi, unsafe_allow_html=True)
+
+
 if not st.session_state.get("masuk"):
-    _, tengah, _ = st.columns([1, 1.1, 1])
-    with tengah:
-        st.markdown('<div class="logo" style="padding-top:12vh"><div class="mark">SG</div><div><b>SAWAL GROUP</b>'
-                    '<span>Usaha Tani · Catatan Keuangan</span></div></div>', unsafe_allow_html=True)
-        with st.container(border=True):
-            sandi = st.text_input("Kata sandi", type="password")
-            if st.button("Masuk", type="primary", width="stretch"):
-                if sandi == st.secrets["APP_PASSWORD"]:
+    st.session_state.setdefault("tahap", "awal")
+    css_depan(st.session_state["tahap"])
+    if st.session_state["tahap"] == "awal":
+        st.markdown('<div class="awal"><div class="lencana">SG</div><div class="t1">SAWAL GROUP</div>'
+                    '<div class="t2">Sistem Catatan Keuangan Usaha Tani</div>'
+                    '<div class="t3">Catat biaya, penjualan, dan pembayaran usaha tani dengan rapi, '
+                    'agar laba dan sisa piutang selalu jelas.</div></div>', unsafe_allow_html=True)
+        _, _tengah, _ = st.columns([1, 1, 1])
+        with _tengah:
+            if st.button("Masuk Sekarang", key="awal_masuk", type="primary", width="stretch"):
+                st.session_state["tahap"] = "login"
+                st.rerun()
+    else:
+        _kiri, _kanan = st.columns(2)
+        with _kiri:
+            st.markdown('<div class="kiri latar-hijau"><div class="lencana">SG</div><div class="t1">SAWAL GROUP</div>'
+                        '<div class="t2">Usaha Tani · Catatan Keuangan</div></div>', unsafe_allow_html=True)
+        with _kanan, st.container(key="loginform"):
+            st.markdown('<div class="sambut">Selamat Datang</div>'
+                        '<div class="sambut-s">Silakan masuk untuk mengakses sistem</div>', unsafe_allow_html=True)
+            with st.form("form_login", border=False):
+                _sandi = st.text_input("Kata sandi", type="password")
+                _kirim = st.form_submit_button("MASUK SISTEM", type="primary", width="stretch")
+            if _kirim:
+                if _sandi == st.secrets["APP_PASSWORD"]:
                     st.session_state["masuk"] = True
                     st.rerun()
                 else:
                     st.error("Kata sandi belum cocok. Coba ketik ulang dengan teliti.")
+            if st.button("Kembali ke beranda", key="kembali", width="stretch"):
+                st.session_state["tahap"] = "awal"
+                st.rerun()
+            st.markdown('<div class="hakcipta">© 2026 SAWAL GROUP. Seluruh hak dilindungi.</div>', unsafe_allow_html=True)
     st.stop()
 
 if "pesan" in st.session_state:
