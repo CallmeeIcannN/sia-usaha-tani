@@ -120,6 +120,36 @@ div.stButton>button:hover,div.stFormSubmitButton>button:hover,[data-testid="stPo
 div.stButton>button:active,div.stFormSubmitButton>button:active,[data-testid="stPopover"]>button:active{transform:scale(.95);box-shadow:none}
 [data-testid="stSidebar"] .stButton>button:hover{transform:none;box-shadow:none}
 @media (prefers-reduced-motion:reduce){[class*="st-key-hal_"]{animation:none}div.stButton>button:hover,div.stButton>button:active{transform:none}}
+.stat{position:relative;overflow:hidden;border:0;color:#fff;border-radius:16px;padding:18px 20px;box-shadow:0 8px 20px rgba(15,23,42,.14);background:linear-gradient(135deg,#15803D,#22C55E)}
+.stat.c2{background:linear-gradient(135deg,#14532D,#166534)}.stat.c3{background:linear-gradient(135deg,#B45309,#F59E0B)}
+.stat.c4{background:linear-gradient(135deg,#1E293B,#475569)}.stat.rugi{background:linear-gradient(135deg,#9F1239,#E11D48)}
+.stApp div.stat .l,.stApp div.stat .s{color:rgba(255,255,255,.9)!important}.stApp div.stat .v{color:#fff!important;font-size:1.6rem;font-weight:800}
+.stat .ik{position:absolute;right:16px;top:16px;width:42px;height:42px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center}
+.stat .ik svg,.akt .ic svg{width:22px;height:22px;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}.stat .ik svg{stroke:#fff}
+.stat .dot{background:#fff}
+.jdl b{display:block;font-size:1.15rem;font-weight:800;color:var(--teks)}.jdl span{font-size:.78rem;color:var(--muted)}
+.kanan{display:flex;gap:12px;align-items:center;justify-content:flex-end;flex-wrap:wrap}
+.chip{padding:6px 12px;border-radius:999px;background:var(--am-bg);color:var(--am-fg);font-size:.76rem;font-weight:600;white-space:nowrap}
+.prof{display:flex;gap:9px;align-items:center}.prof .mark{width:36px;height:36px;border-radius:50%;background:var(--pri);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;overflow:hidden;font-size:.8rem}
+.prof .mark img{width:100%;height:100%;object-fit:cover}.prof b{display:block;font-size:.82rem;color:var(--teks)}.prof span{font-size:.7rem;color:var(--muted)}
+.aktiv{display:flex;flex-direction:column}
+.akt{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--garis)}.akt:last-child{border-bottom:0}
+.akt .ic{flex:none;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center}.akt .ic svg{width:18px;height:18px}
+.akt .ic.jual,.akt .ic.bayar{background:var(--ok-bg);color:var(--ok-fg);stroke:var(--ok-fg)}.akt .ic.biaya{background:var(--ro-bg);color:var(--ro-fg)}
+.akt .ic svg{stroke:currentColor}
+.akt .tx{flex:1;min-width:0}.akt .tx b{display:block;font-size:.86rem;color:var(--teks);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.akt .tx span{font-size:.74rem;color:var(--muted)}.akt .nm{text-align:right;font-variant-numeric:tabular-nums}
+.akt .nm b{display:block;font-size:.86rem}.akt .nm span{font-size:.7rem;color:var(--muted)}.akt .nm b.plus{color:var(--ok-fg)}.akt .nm b.minus{color:var(--ro-fg)}
+[data-testid="stSidebar"]{background:linear-gradient(180deg,#14532D,#15803D)!important;border:0!important;border-radius:0!important}
+.logo{display:flex;flex-direction:column;align-items:center;text-align:center;gap:8px;padding:10px 6px 18px;margin-bottom:10px;border-bottom:1px solid rgba(255,255,255,.18)}
+.logo .mark{width:68px;height:68px;border-radius:50%;border:3px solid rgba(255,255,255,.92);background:#fff;color:#15803D;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:1.1rem;overflow:hidden;box-shadow:0 6px 16px rgba(0,0,0,.25)}
+.logo .mark img{width:100%;height:100%;object-fit:cover}.logo b{display:block;color:#fff!important;font-size:1.05rem;letter-spacing:.05em}.logo span{color:rgba(255,255,255,.78)!important;font-size:.72rem}
+.stApp [data-testid="stSidebar"] p,.stApp [data-testid="stSidebar"] label,.stApp [data-testid="stSidebar"] small{color:#fff!important}
+[data-testid="stSidebar"] hr{border-color:rgba(255,255,255,.2)!important}
+[data-testid="stSidebar"] .stButton>button{color:#fff!important;border-left:3px solid transparent!important;border-radius:10px!important;background:transparent!important}
+.stApp [data-testid="stSidebar"] .stButton>button p{color:#fff!important}
+[data-testid="stSidebar"] .stButton>button:hover{background:rgba(255,255,255,.12)!important;color:#fff!important}
+[data-testid="stSidebar"] .stButton>button[data-testid="stBaseButton-primary"]{background:rgba(255,255,255,.2)!important;border-left:3px solid #FACC15!important;color:#fff!important}
 @media (max-width:640px){.judul{font-size:1.35rem}.stat .v{font-size:1.25rem}}
 @media (prefers-reduced-motion:reduce){.dot{animation:none}}
 </style>
@@ -347,13 +377,29 @@ def hapus(tabel, i):
 
 
 # ---------- Komponen tampilan ----------
-def stat(label, nilai, sub="", kelas=""):
+SVG_STAT = [
+    '<svg viewBox="0 0 24 24"><polyline points="3 17 9 11 13 15 21 7"/><polyline points="15 7 21 7 21 13"/></svg>',
+    '<svg viewBox="0 0 24 24"><polyline points="3 7 9 13 13 9 21 17"/><polyline points="15 17 21 17 21 11"/></svg>',
+    '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M9.5 9.5h4a1.5 1.5 0 0 1 0 3h-3a1.5 1.5 0 0 0 0 3h4"/></svg>',
+    '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>',
+]
+SVG_AKT = {
+    "jual": '<svg viewBox="0 0 24 24"><path d="M5 8h14l-1.5 11h-11z"/><path d="M9 8a3 3 0 0 1 6 0"/></svg>',
+    "bayar": SVG_STAT[2],
+    "biaya": '<svg viewBox="0 0 24 24"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/></svg>',
+}
+
+
+def stat(label, nilai, sub="", kelas="", n=1):
+    c = "rugi" if "rugi" in kelas else f"c{n}"
     s = f'<div class="s">{sub}</div>' if sub else ""
-    return f'<div class="stat {kelas}"><div class="l">{label}</div><div class="v">{nilai}</div>{s}</div>'
+    return (f'<div class="stat {c}"><span class="ik">{SVG_STAT[(n - 1) % 4]}</span>'
+            f'<div class="l">{label}</div><div class="v">{nilai}</div>{s}</div>')
 
 
 def stats(items):
-    st.markdown('<div class="stats">' + "".join(stat(*i) for i in items) + "</div>", unsafe_allow_html=True)
+    st.markdown('<div class="stats">' + "".join(stat(*i, n=k) for k, i in enumerate(items, 1)) + "</div>",
+                unsafe_allow_html=True)
 
 
 def kosong(judul="Belum ada data", ket="Tambahkan data pertama untuk mulai mencatat aktivitas usaha tani."):
@@ -428,6 +474,71 @@ def aksi_hapus(tabel_db, kunci, peringatan="Hapus data ini?"):
     return f
 
 
+def lalu(tgl):
+    try:
+        y, m, d = map(int, str(tgl)[:10].split("-"))
+        n = (date.today() - date(y, m, d)).days
+    except Exception:
+        return str(tgl)
+    if n < 0:
+        return tgl_id(tgl)
+    if n == 0:
+        return "hari ini"
+    if n < 30:
+        return f"{n} hari lalu"
+    if n < 365:
+        return f"{n // 30} bulan lalu"
+    return f"{n // 365} tahun lalu"
+
+
+def tren_bulanan():
+    r = {}
+    for p in jual_all:
+        r.setdefault(str(p["tanggal"])[:7], [0, 0])[0] += p["total"]
+    for b in biaya_all:
+        r.setdefault(str(b["tanggal"])[:7], [0, 0])[1] += b["jumlah"]
+    if not r:
+        return None
+    return pd.DataFrame([{"bulan": f"{BULAN[int(k[5:7]) - 1][:3]} {k[:4]}", "Pendapatan": r[k][0] / 1e6,
+                          "Biaya": r[k][1] / 1e6} for k in sorted(r)[-12:]])
+
+
+def grafik_tren(d):
+    p = pd.concat([d[["bulan"]].assign(jenis="Pendapatan", juta=d["Pendapatan"]),
+                   d[["bulan"]].assign(jenis="Biaya", juta=d["Biaya"])])
+    dasar = alt.Chart(p).encode(
+        x=alt.X("bulan:N", sort=list(d["bulan"]), title=None, axis=alt.Axis(labelAngle=0)),
+        y=alt.Y("juta:Q", title="Juta rupiah"),
+        color=alt.Color("jenis:N", title=None, legend=alt.Legend(orient="top"),
+                        scale=alt.Scale(domain=["Pendapatan", "Biaya"], range=["#15803D", "#F59E0B"])),
+        tooltip=[alt.Tooltip("bulan:N", title="Bulan"), alt.Tooltip("jenis:N", title="Jenis"),
+                 alt.Tooltip("juta:Q", title="Juta Rp", format=",.1f")])
+    return (dasar.mark_area(opacity=0.12, interpolate="monotone") + dasar.mark_line(strokeWidth=3, interpolate="monotone")
+            + dasar.mark_point(filled=True, size=70)).properties(height=300)
+
+
+def aktivitas_html():
+    tan = {m["id"]: m["tanaman"] for m in musim}
+    ev = []
+    for p in jual_all:
+        saluran = PEMBELI.get(p["jenis_pembeli"], (p["jenis_pembeli"],))[0]
+        ev.append((str(p["tanggal"]), p["id"], "jual", f'Penjualan {tan.get(p["musim_tanam_id"], "")}'.strip(),
+                   f'{saluran} · {p["jumlah_kg"]:g} kg', p["total"], 1))
+    for b in biaya_all:
+        ev.append((str(b["tanggal"]), b["id"], "biaya", f'Biaya {KATEGORI.get(b["kategori"], (b["kategori"],))[0]}',
+                   tan.get(b["musim_tanam_id"], ""), b["jumlah"], -1))
+    for y in bayar_all:
+        ev.append((str(y["tanggal"]), y["id"], "bayar", "Pembayaran diterima", y["keterangan"] or "", y["jumlah"], 1))
+    if not ev:
+        return '<div class="kosong"><b>Belum ada aktivitas</b></div>'
+    ev.sort(key=lambda e: (e[0], e[1]), reverse=True)
+    return '<div class="aktiv">' + "".join(
+        f'<div class="akt"><div class="ic {k}">{SVG_AKT[k]}</div><div class="tx"><b>{sel(judul)}</b><span>{sel(sub)}</span></div>'
+        f'<div class="nm"><b class="{"plus" if tanda > 0 else "minus"}">{"+" if tanda > 0 else "-"}{rp(nilai)}</b>'
+        f'<span>{lalu(tgl)}</span></div></div>'
+        for tgl, _, k, judul, sub, nilai, tanda in ev[:6]) + "</div>"
+
+
 # ---------- Grafik ----------
 def grafik(df):
     d = df.copy()
@@ -470,7 +581,7 @@ if st.session_state["menu"] not in dict(MENU):
 _ay = foto_ayah()
 _mark = f'<img src="data:image/jpeg;base64,{_ay}" alt="">' if _ay else "SG"
 st.sidebar.markdown(f'<div class="logo"><div class="mark">{_mark}</div><div><b>SAWAL GROUP</b>'
-                    '<span>Usaha Tani · Catatan Keuangan</span></div></div>', unsafe_allow_html=True)
+                    '<span>Sistem Catatan Keuangan</span></div></div>', unsafe_allow_html=True)
 for nama, ikon in MENU:
     if st.sidebar.button(nama, icon=ikon, key="nav_" + nama.replace(" ", "_"), width="stretch",
                          type="primary" if st.session_state["menu"] == nama else "secondary"):
@@ -480,21 +591,21 @@ halaman = st.session_state["menu"]
 st.sidebar.divider()
 st.sidebar.selectbox("Tampilan", ["Terang", "Gelap", "Otomatis"], key="mode_tampilan",
                      format_func=lambda x: {"Terang": "Terang", "Gelap": "Gelap", "Otomatis": "Otomatis (ikut perangkat)"}[x])
-st.sidebar.markdown(f'<div class="profil"><div class="mark">{_mark if _ay else "P"}</div>'
-                    '<div>Pencatat keuangan<span>Akun pengelola</span></div></div>', unsafe_allow_html=True)
 
 # ---------- Header ----------
 _t = date.today()
-_k1, _k2, _k3 = st.columns([2.4, 2, 1.4], vertical_alignment="center")
-_k1.markdown(f'<div class="crumb">Dashboard / <b>{halaman}</b><span>{HARI[_t.weekday()]}, {_t.day:02d} '
-             f'{BULAN[_t.month - 1]} {_t.year}</span></div>', unsafe_allow_html=True)
-_k2.text_input("Cari", key="cari", placeholder="Cari di halaman ini...", label_visibility="collapsed")
-with _k3.popover("+ Catat Transaksi", type="primary", width="stretch"):
-    for _n in ["Biaya", "Penjualan", "Pembayaran"]:
-        if st.button(_n, key="cta_" + _n, width="stretch"):
-            st.session_state["menu"] = _n
-            st.rerun()
-st.markdown(f'<div class="judul">{halaman}</div><div class="sub">{HALAMAN[halaman]}</div>', unsafe_allow_html=True)
+with st.container(border=True, key="kepala"):
+    _k1, _k2, _k3, _k4 = st.columns([2.6, 2.2, 1.5, 2.6], vertical_alignment="center")
+    _k1.markdown(f'<div class="jdl"><b>{halaman}</b><span>{HALAMAN[halaman]}</span></div>', unsafe_allow_html=True)
+    _k2.text_input("Cari", key="cari", placeholder="Cari di halaman ini...", label_visibility="collapsed")
+    with _k3.popover("+ Catat Transaksi", type="primary", width="stretch"):
+        for _n in ["Biaya", "Penjualan", "Pembayaran"]:
+            if st.button(_n, key="cta_" + _n, width="stretch"):
+                st.session_state["menu"] = _n
+                st.rerun()
+    _k4.markdown(f'<div class="kanan"><div class="chip">{HARI[_t.weekday()]}, {_t.day:02d} {BULAN[_t.month - 1]} {_t.year}</div>'
+                 f'<div class="prof"><div class="mark">{_mark}</div><div><b>Pencatat</b><span>Pengelola</span></div></div></div>',
+                 unsafe_allow_html=True)
 
 with st.container(key="hal_" + halaman.replace(" ", "_")):
     # ---------- Laporan ----------
@@ -510,27 +621,36 @@ with st.container(key="hal_" + halaman.replace(" ", "_")):
         pend, biaya, laba, piutang = (df["total_penjualan"].sum(), df["total_biaya"].sum(),
                                       df["laba_rugi"].sum(), df["sisa_piutang"].sum())
         margin = laba / pend * 100 if pend else 0
-        stats([("Total Pendapatan", rp(pend)), ("Total Biaya Operasional", rp(biaya)),
-               ("Laba Bersih" if laba >= 0 else "Rugi Bersih", rp(laba), f"Margin {margin:.0f}%", "hl"),
-               ("Sisa Piutang", rp(piutang), "Semua sudah lunas" if piutang == 0 else "Belum diterima",
-                "ok" if piutang == 0 else "")])
-        k1, k2 = st.columns([6, 4], gap="medium")
+        stats([("Total Pendapatan", rp(pend), f"{len(jual_all)} transaksi penjualan"),
+               ("Total Biaya Operasional", rp(biaya), f"{len(biaya_all)} transaksi biaya"),
+               ("Laba Bersih" if laba >= 0 else "Rugi Bersih", rp(laba), f"Margin {margin:.0f}%", "" if laba >= 0 else "rugi"),
+               ("Sisa Piutang", rp(piutang), "Semua sudah lunas" if piutang == 0 else "Belum diterima")])
+        k1, k2 = st.columns([2, 1], gap="medium")
         with k1, st.container(border=True):
-            st.subheader("Pendapatan dan biaya per musim tanam")
-            st.altair_chart(grafik(df), width="stretch")
+            st.subheader("Statistik keuangan (12 bulan terakhir)")
+            tren = tren_bulanan()
+            if tren is None:
+                kosong()
+            else:
+                st.altair_chart(grafik_tren(tren), width="stretch")
         with k2, st.container(border=True):
+            st.subheader("Aktivitas terbaru")
+            st.markdown(aktivitas_html(), unsafe_allow_html=True)
+        k3, k4 = st.columns([2, 1], gap="medium")
+        with k3:
+            st.subheader("Rincian finansial per musim tanam")
+            tabel([{"tanaman": (r.tanaman, tgl_id(r.tanggal_tanam)), "biaya": rp(r.total_biaya),
+                    "jual": rp(r.total_penjualan), "piutang": rp(r.sisa_piutang), "laba": rp(r.laba_rugi),
+                    "_laba": r.laba_rugi,
+                    "margin": f"{r.laba_rugi / r.total_penjualan * 100:.0f}%" if r.total_penjualan else "-",
+                    "status": r.status} for r in df.itertuples()],
+                  [("Komoditas", "tanaman", "l"), ("Biaya", "biaya", "r"), ("Penjualan", "jual", "r"),
+                   ("Piutang", "piutang", "r"), ("Laba", "laba", "r"), ("Margin", "margin", "r"),
+                   ("Status", "status", "c")])
+        with k4, st.container(border=True):
             st.subheader("Pendapatan per komoditas")
             st.altair_chart(donat(df), width="stretch")
-        st.subheader("Rincian finansial per musim tanam")
-        tabel([{"tanaman": r.tanaman, "tgl": tgl_id(r.tanggal_tanam), "biaya": rp(r.total_biaya),
-                "jual": rp(r.total_penjualan), "piutang": rp(r.sisa_piutang), "laba": rp(r.laba_rugi),
-                "_laba": r.laba_rugi, "margin": f"{r.laba_rugi / r.total_penjualan * 100:.0f}%" if r.total_penjualan else "-",
-                "status": r.status} for r in df.itertuples()],
-              [("Komoditas", "tanaman", "l"), ("Tanggal tanam", "tgl", "l"), ("Total biaya", "biaya", "r"),
-               ("Total penjualan", "jual", "r"), ("Sisa piutang", "piutang", "r"), ("Laba bersih", "laba", "r"),
-               ("Margin", "margin", "r"), ("Status", "status", "c")])
 
-    # ---------- Musim Tanam ----------
     elif halaman == "Musim Tanam":
         n_jalan = sum(1 for m in musim if m["status"] == "berjalan")
         stats([("Total Musim", str(len(musim))),
